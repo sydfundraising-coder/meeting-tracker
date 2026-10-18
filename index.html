@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BAPS Meeting Tracker</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: maroon sidebar + main column (desktop); top bar + bottom tab bar (phone). Meeting details open in a right-hand drawer. */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --surface-2:#f7f8fa; --fg:#1a1f2b; --muted:#667085; --line:#e4e7ec; --line-2:#d0d5dd;
+  --brand:#141c33; --brand-2:#26324f; --on-brand:#f2efe7; --on-brand-dim:rgba(242,239,231,.62);
+  --saffron:#9a7432; --saffron-ink:#7d5c22; --saffron-soft:#f5efe3; --on-saffron:#ffffff; --gold-hi:#d3b06c;
+  --done:#3d7a5a; --done-soft:#e8f2ec; --moved:#9a6b25; --moved-soft:#f6eedf; --cancel:#6f7686; --cancel-soft:#eef0f3; --alert:#b2443f; --alert-soft:#f9e9e8;
+  --sched:#cfd5df; --c-held:#26324f; --c-up:#c8d0de; --c-cx:#8b93a3;
+  --d-shayona:#2a78d6; --d-kitchen:#eb6834; --d-accounts:#1baf7a; --d-akshardham:#eda100; --d-capital:#e87ba4; --d-dharmada:#008300;
+  --f-display:"Sora","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --shadow-1:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.04);
+  --shadow-2:0 16px 44px rgba(16,24,40,.18);
+  --side:236px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e121b; --surface:#161b26; --surface-2:#1c2230; --fg:#eceef2; --muted:#98a2b3; --line:#262d3c; --line-2:#344054;
+  --brand:#0a0f1e; --brand-2:#1b2440; --on-brand:#f2efe7; --on-brand-dim:rgba(242,239,231,.6);
+  --saffron:#d3b06c; --saffron-ink:#dfc28a; --saffron-soft:#2a2416; --on-saffron:#17130a; --gold-hi:#d3b06c;
+  --done:#7fbf9b; --done-soft:#1a2c23; --moved:#ddb06a; --moved-soft:#2f2717; --cancel:#a3aab8; --cancel-soft:#232a36; --alert:#ec8a84; --alert-soft:#3a1f1e;
+  --sched:#3a4358; --c-held:#93a6d8; --c-up:#3a4358; --c-cx:#6b7488;
+  --d-shayona:#3987e5; --d-kitchen:#d95926; --d-accounts:#199e70; --d-akshardham:#c98500; --d-capital:#d55181; --d-dharmada:#008300;
+  --shadow-1:none; --shadow-2:0 16px 44px rgba(0,0,0,.55); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e121b; --surface:#161b26; --surface-2:#1c2230; --fg:#eceef2; --muted:#98a2b3; --line:#262d3c; --line-2:#344054;
+  --brand:#0a0f1e; --brand-2:#1b2440; --on-brand:#f2efe7; --on-brand-dim:rgba(242,239,231,.6);
+  --saffron:#d3b06c; --saffron-ink:#dfc28a; --saffron-soft:#2a2416; --on-saffron:#17130a; --gold-hi:#d3b06c;
+  --done:#7fbf9b; --done-soft:#1a2c23; --moved:#ddb06a; --moved-soft:#2f2717; --cancel:#a3aab8; --cancel-soft:#232a36; --alert:#ec8a84; --alert-soft:#3a1f1e;
+  --sched:#3a4358; --c-held:#93a6d8; --c-up:#3a4358; --c-cx:#6b7488;
+  --d-shayona:#3987e5; --d-kitchen:#d95926; --d-accounts:#199e70; --d-akshardham:#c98500; --d-capital:#d55181; --d-dharmada:#008300;
+  --shadow-1:none; --shadow-2:0 16px 44px rgba(0,0,0,.55); color-scheme:dark }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.015em;font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+[hidden]{display:none!important}
+svg{flex:none}
+[data-dept="Shayona"]{--dc:var(--d-shayona)} [data-dept="Kitchen"]{--dc:var(--d-kitchen)} [data-dept="Accounts"]{--dc:var(--d-accounts)}
+[data-dept="Capital Projects"]{--dc:var(--d-capital)} [data-dept="Dharmada"]{--dc:var(--d-dharmada)} [data-dept="Akshardham"]{--dc:var(--d-akshardham)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--dc,var(--muted));flex:none}
+
+/* ---------- shell ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--brand);color:var(--on-brand);display:flex;flex-direction:column;padding:22px 14px calc(18px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));z-index:30}
+.brand{display:flex;gap:11px;align-items:center;padding:0 8px 22px}
+.mark{width:38px;height:38px;border-radius:11px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--gold-hi);color:var(--gold-hi);display:grid;place-items:center}
+.mark svg{width:22px;height:22px}
+.brand b{font-family:var(--f-display);font-size:16px;font-weight:600;display:block;line-height:1.2}
+.brand small{font-size:12px;color:var(--on-brand-dim)}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-weight:600;font-size:14.5px;color:var(--on-brand-dim)}
+.nav button svg{width:19px;height:19px}
+.nav button:hover{background:rgba(255,255,255,.07);color:var(--on-brand)}
+.nav button[aria-current="page"]{background:rgba(255,255,255,.12);color:var(--on-brand)}
+.nav button[aria-current="page"] svg{color:var(--gold-hi)}
+.nav button[aria-current="page"]{box-shadow:inset 3px 0 0 var(--gold-hi)}
+.nav button:focus-visible{outline:2px solid var(--saffron)}
+.nav .badge{margin-left:auto}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--gold-hi);color:#17130a;font-size:11.5px;font-weight:700;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.badge.alert{background:var(--alert);color:#fff}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.side-btn{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--on-brand);border:1px solid rgba(255,255,255,.16)}
+.side-btn:hover{background:rgba(255,255,255,.07)}
+.side-btn.primary{background:var(--gold-hi);color:#17130a;border-color:transparent}
+.side-btn.primary:hover{filter:brightness(1.05)}
+.side-btn svg{width:17px;height:17px}
+.side-btn:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.saved{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--on-brand-dim);padding:6px 4px 0}
+.saved i{width:7px;height:7px;border-radius:50%;background:#7fd6a2}
+.saved.bad i{background:#ff8f86}
+
+.main{margin-left:var(--side);min-height:100vh;padding-block:22px 64px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.inner{max-width:1120px;margin:0 auto}
+.topbar{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.topbar .ttl{flex:1 1 260px;min-width:0}
+.topbar h1{font-size:26px}
+.topbar p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.search{position:relative;flex:0 1 320px;min-width:0}
+.search input{width:100%;height:42px;padding:0 14px 0 40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow-1)}
+.search input::placeholder{color:var(--muted)}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--muted)}
+.mob-actions{display:none;gap:6px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.chip{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:17px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;font-weight:600;box-shadow:var(--shadow-1)}
+.chip:hover{border-color:var(--line-2)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.select{height:34px;border-radius:17px;border:1px solid var(--line);background:var(--surface);padding:0 12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-1)}
+.filters .select{margin-left:auto}
+
+.tabbar{display:none}
+
+/* ---------- common ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--fg);white-space:nowrap}
+.btn:hover{border-color:var(--fg)}
+.btn svg{width:16px;height:16px}
+.btn.sm{height:30px;padding:0 10px;font-size:12.5px;border-radius:8px}
+.btn.primary{background:var(--saffron);border-color:var(--saffron);color:var(--on-saffron)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2);border-color:var(--line)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.icon-btn{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;border-radius:9px;color:var(--muted)}
+.icon-btn:hover{background:var(--surface-2);color:var(--fg)}
+.icon-btn.danger:hover{background:var(--alert-soft);color:var(--alert)}
+.icon-btn svg{width:17px;height:17px}
+.icon-btn:focus-visible{outline:2px solid var(--saffron)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-1)}
+.pill{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:13px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.pill svg{width:13px;height:13px}
+.p-Scheduled{background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.p-Completed{background:var(--done-soft);color:var(--done)}
+.p-Postponed{background:var(--moved-soft);color:var(--moved)}
+.p-Cancelled{background:var(--cancel-soft);color:var(--cancel)}
+.p-need{background:var(--alert-soft);color:var(--alert)}
+.p-today{background:var(--saffron-soft);color:var(--saffron-ink)}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:700;color:#fff;flex:none;background:hsl(var(--h) 45% 42%)}
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font-family:var(--f-display);font-size:17px;font-weight:600;margin-bottom:4px}
+.empty svg{width:40px;height:40px;color:var(--line-2);margin-bottom:8px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{all:unset;cursor:pointer;height:30px;padding:0 12px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08),inset 0 0 0 1px var(--line)}
+.seg button:focus-visible{outline:2px solid var(--saffron)}
+.seg .n{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.seg .n.alert{color:var(--alert)}
+
+/* ---------- dashboard ---------- */
+.hero{margin-top:22px;border-radius:22px;background:var(--brand);color:var(--on-brand);padding:28px 30px;position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:26px;align-items:center}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-radial-gradient(circle at 104% -10%,color-mix(in srgb,var(--gold-hi) 16%,transparent) 0 1px,transparent 1.5px 26px),radial-gradient(circle at 100% 0%,color-mix(in srgb,var(--gold-hi) 22%,transparent),transparent 60%)}
+.hero>*{position:relative}
+.hero .hi{font-size:14px;color:var(--on-brand-dim);font-weight:600}
+.hero h2{font-size:clamp(26px,3.2vw,36px);line-height:1.15;margin-top:6px;font-weight:500;letter-spacing:-.02em}
+.hero .hi{color:var(--gold-hi)!important;letter-spacing:.02em}
+.hero .when{margin-top:8px;color:var(--on-brand-dim);font-size:14.5px}
+.hero .warn{all:unset;cursor:pointer;margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:600}
+.hero .warn:hover{background:rgba(255,255,255,.18)}
+.hero .warn i{width:8px;height:8px;border-radius:50%;background:#ff9b8f}
+.hero .warn:focus-visible{outline:2px solid var(--saffron)}
+.next{display:flex;flex-direction:column;gap:8px}
+.next .lbl{font-size:13px;font-weight:600;color:var(--on-brand-dim)}
+.nx{all:unset;cursor:pointer;display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px 10px 10px}
+.nx:hover{background:rgba(255,255,255,.13)}
+.nx:focus-visible{outline:2px solid var(--saffron)}
+.nx .d{background:var(--surface);color:var(--fg);border-radius:10px;text-align:center;padding:5px 0;line-height:1.05;border-top:4px solid var(--dc)}
+.nx .d small{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.nx .d b{font-family:var(--f-display);font-size:19px;font-weight:600}
+.nx .t{min-width:0}
+.nx .t b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx .t span{font-size:12.5px;color:var(--on-brand-dim)}
+.nx .tg{font-size:11.5px;font-weight:700;background:var(--gold-hi);color:#17130a;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.nx .tg.soft{background:rgba(255,255,255,.14);color:var(--on-brand)}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+.stat{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;grid-template-columns:42px 1fr;gap:4px 12px;align-items:center;box-shadow:var(--shadow-1)}
+.stat:hover{border-color:var(--line-2)}
+.stat:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.stat .ic{grid-row:span 2;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--tint);color:var(--ink)}
+.stat .ic svg{width:21px;height:21px}
+.stat b{font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted);font-weight:500}
+.s-month{--tint:var(--saffron-soft);--ink:var(--saffron-ink)} .s-done{--tint:var(--done-soft);--ink:var(--done)} .s-need{--tint:var(--alert-soft);--ink:var(--alert)} .s-act{--tint:var(--moved-soft);--ink:var(--moved)}
+
+.dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;margin-top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;gap:14px;min-width:0}
+.c12{grid-column:span 12}.c7{grid-column:span 7}.c5{grid-column:span 5}.c6{grid-column:span 6}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.card-h h3{font-size:17px}
+.card-h p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:3px}
+.mc{position:relative;height:calc(var(--H) + 46px);padding-left:28px}
+.mc-grid{position:absolute;left:28px;right:0;top:22px;height:var(--H)}
+.mc-grid .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.7}
+.mc-grid .gl:first-child{border-top-style:solid}
+.mc-grid .gl span{position:absolute;left:-28px;top:-9px;width:20px;text-align:right;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mc-bars{position:absolute;left:28px;right:0;top:0;height:calc(var(--H) + 22px);display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end}
+.mc-col{all:unset;box-sizing:border-box;cursor:pointer;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border-radius:10px;position:relative}
+.mc-col:hover,.mc-col:focus-visible{background:color-mix(in srgb,var(--fg) 5%,transparent)}
+.mc-col:focus-visible{outline:2px solid var(--saffron)}
+.mc-stack{width:min(62%,38px);display:flex;flex-direction:column-reverse;gap:2px}
+.mc-stack i{display:block;min-height:3px}
+.mc-stack i:last-child{border-radius:6px 6px 0 0}
+.mc-col.now{background:color-mix(in srgb,var(--saffron) 8%,transparent)}
+.mc-col.now .mc-val{color:var(--saffron-ink)}
+.mc-val{font-size:13px;font-weight:700;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.mc-lab{position:absolute;bottom:-24px;font-size:12px;color:var(--muted);font-weight:600}
+.mc-col.now .mc-lab{color:var(--saffron-ink)}
+.mc-col.now .mc-lab::after{content:"";display:block;width:4px;height:4px;border-radius:50%;background:var(--saffron);margin:2px auto 0}
+.tip{position:fixed;z-index:80;background:var(--surface);color:var(--fg);border:1px solid var(--line-2);border-radius:11px;padding:9px 12px;font-size:12.5px;line-height:1.65;box-shadow:var(--shadow-2);pointer-events:none;max-width:260px}
+.tip .tk{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:7px}
+.tip .tk[data-dept]{background:var(--dc);border-radius:50%}
+.tip hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+.hbars{display:flex;flex-direction:column;gap:4px}
+.hb{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:150px minmax(0,1fr) 340px;gap:16px;align-items:center;padding:9px 10px;border-radius:12px}
+.hb:hover{background:var(--surface-2)}
+.hb:focus-visible{outline:2px solid var(--saffron)}
+.hb-name{display:inline-flex;gap:9px;align-items:center;font-weight:600;font-size:14px;white-space:nowrap}
+.hb-track{display:flex;align-items:center;gap:10px;min-width:0}
+.hb-fill{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;min-width:6px}
+.hb-fill i{display:block;height:100%}
+.hb-n{font-size:14px;font-variant-numeric:tabular-nums}
+.hb-meta{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.hb-meta .late{color:var(--alert);font-weight:700}
+@media (max-width:900px){.hb{grid-template-columns:1fr;gap:6px}}
+details.tbl summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);width:max-content}
+details.tbl[open] summary{margin-bottom:10px}
+.dtable{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.dtable th,.dtable td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.dtable th:first-child{text-align:left}
+.dtable thead th{font-size:12px;color:var(--muted);font-weight:600}
+.dtable tfoot td,.dtable tfoot th,.dtable .tot{font-weight:700}
+
+.depts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dept{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;background:var(--surface)}
+.dept::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--dc)}
+.dept:hover{border-color:var(--line-2);background:var(--surface-2)}
+.dept:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.dept .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dept .top b{font-size:15px;font-weight:700}
+.dept .top span{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:7px;border-radius:7px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.dept .meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);gap:8px;flex-wrap:wrap}
+.dept .meta .late{color:var(--alert);font-weight:700}
+
+.alist-mini{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.alist-mini li{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.alist-mini li:first-child{border-top:0}
+.alist-mini .tx{flex:1;min-width:0}
+.alist-mini .tx b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alist-mini .tx small{font-size:12.5px;color:var(--muted)}
+.duechip{font-size:12px;font-weight:700;padding:3px 8px;border-radius:7px;background:var(--surface-2);color:var(--muted);white-space:nowrap;box-shadow:inset 0 0 0 1px var(--line)}
+.duechip.late{background:var(--alert-soft);color:var(--alert);box-shadow:none}
+.duechip.soon{background:var(--moved-soft);color:var(--moved);box-shadow:none}
+.mini-stats{display:flex;gap:10px 26px;flex-wrap:wrap}
+.mini-stats div{display:flex;flex-direction:column}
+.mini-stats b{font-family:var(--f-display);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.mini-stats span{font-size:12.5px;color:var(--muted)}
+.ppl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.ppl li{display:grid;grid-template-columns:30px minmax(0,120px) 1fr 42px;gap:10px;align-items:center;font-size:13.5px}
+.ppl .pn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ppl .pb{display:flex;gap:2px;height:8px}
+.ppl .pb i{display:block;height:100%;border-radius:3px}
+.ppl .pc{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+.uns{display:flex;flex-wrap:wrap;gap:8px}
+.uns span{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:6px 11px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line)}
+.uns span small{color:var(--muted)}
+
+/* ---------- meetings list ---------- */
+.list-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.banner{margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--alert-soft);border-radius:14px;padding:12px 16px}
+.banner svg{width:20px;height:20px;color:var(--alert)}
+.banner p{margin:0;flex:1 1 260px;font-size:14px}
+.month{margin-top:26px}
+.month-h{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding-left:4px}
+.month-h h2{font-size:18px}
+.month-h span{font-size:13px;color:var(--muted)}
+.rows{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-1)}
+.row{display:grid;grid-template-columns:58px minmax(0,1fr) auto auto 40px;gap:16px;align-items:center;padding:12px 16px 12px 14px;cursor:pointer;border-top:1px solid var(--line);position:relative}
+.row:first-child{border-top:0}
+.row:hover{background:var(--surface-2)}
+.row:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.row.sel{background:var(--saffron-soft)}
+.dbox{width:52px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);text-align:center;padding:5px 0 6px;line-height:1.05;overflow:hidden;position:relative}
+.dbox::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--dc)}
+.dbox small{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+.dbox b{font-family:var(--f-display);font-size:20px;font-weight:600}
+.row.is-today .dbox{background:var(--brand);box-shadow:none}
+.row.is-today .dbox small{color:var(--gold-hi)}.row.is-today .dbox b{color:var(--on-brand)}
+.r-main{min-width:0}
+.r-main .t{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.r-main .s{font-size:13px;color:var(--muted);display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;margin-top:1px}
+.r-main .s .dp{display:inline-flex;gap:6px;align-items:center;color:var(--fg);font-weight:600}
+.swami{font-size:11.5px;font-weight:700;color:var(--saffron-ink);background:var(--saffron-soft);padding:2px 8px;border-radius:6px}
+.row.is-cancel .t{text-decoration:line-through;color:var(--muted)}
+.rec{display:flex;gap:12px;color:var(--muted)}
+.rec span{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;opacity:.35}
+.rec span.on{opacity:1;color:var(--fg)}
+.rec span.late{opacity:1;color:var(--alert)}
+.rec svg{width:15px;height:15px}
+.tick{all:unset;cursor:pointer;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 2px var(--line-2);color:transparent}
+.tick:hover{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
+.tick[aria-pressed="true"]{background:var(--done);box-shadow:none;color:#fff}
+.tick svg{width:18px;height:18px}
+.tick:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+
+/* ---------- calendar ---------- */
+.cal{margin-top:22px;padding:18px}
+.cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.cal-nav h2{font-size:20px;margin-right:auto}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dow{font-size:12px;font-weight:700;color:var(--muted);padding:0 8px 4px}
+.cell{all:unset;box-sizing:border-box;cursor:pointer;min-height:104px;border-radius:12px;background:var(--surface-2);padding:7px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.cell:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+.cell.out{background:transparent;cursor:default;opacity:.35}
+.cell.today .n{background:var(--brand);color:var(--on-brand);border-radius:50%;width:24px;height:24px;display:grid;place-items:center}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--fg)}
+.cell:focus-visible{outline:2px solid var(--saffron)}
+.cell .n{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;height:24px;display:flex;align-items:center;padding-left:3px}
+.ev{font-size:11.5px;line-height:1.3;padding:3px 6px;border-radius:6px;background:var(--surface);color:var(--fg);box-shadow:inset 3px 0 0 var(--dc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ev.s-Completed{opacity:.55}.ev.s-Cancelled{text-decoration:line-through;opacity:.45}
+.ev.need{box-shadow:inset 3px 0 0 var(--dc),inset 0 0 0 1px var(--alert)}
+.more{font-size:11.5px;color:var(--muted);padding-left:4px;font-weight:600}
+.dots{display:none;gap:3px;flex-wrap:wrap;padding-left:3px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--dc)}
+.day-h{margin:24px 0 10px 4px;font-size:17px}
+
+/* ---------- actions board ---------- */
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px;align-items:start}
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.col-h{display:flex;align-items:center;gap:9px;padding:4px 6px}
+.col-h h3{font-size:15px}
+.col-h i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.col-h span{margin-left:auto;font-size:13px;font-weight:700;color:var(--muted)}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:flex;flex-direction:column;gap:9px;box-shadow:var(--shadow-1);position:relative}
+.acard.late{border-color:color-mix(in srgb,var(--alert) 45%,var(--line))}
+.acard .tx{font-weight:600;font-size:14.5px;line-height:1.4}
+.acard.done .tx{text-decoration:line-through;color:var(--muted)}
+.acard .mt{all:unset;cursor:pointer;font-size:12.5px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.acard .mt:hover{color:var(--fg);text-decoration:underline}
+.acard .mt:focus-visible{outline:2px solid var(--saffron)}
+.acard .ft{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acard .ow{display:inline-flex;gap:7px;align-items:center;font-size:13px;font-weight:600;margin-right:auto;min-width:0}
+.acard .ow .av{width:24px;height:24px;font-size:10px}
+.mv{display:flex;gap:6px}
+.col-empty{font-size:13px;color:var(--muted);text-align:center;padding:18px 8px;border:1.5px dashed var(--line-2);border-radius:12px}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(20,8,14,.42);z-index:60;opacity:0;transition:opacity .2s}
+.scrim.on{opacity:1}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);background:var(--bg);z-index:61;box-shadow:var(--shadow-2);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.drawer.on{transform:none}
+.dr-head{background:var(--surface);border-bottom:1px solid var(--line);padding:calc(18px + env(safe-area-inset-top,0px)) max(22px,env(safe-area-inset-right,0px)) 0 22px;position:relative}
+.dr-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--dc)}
+.dr-top{display:flex;gap:12px;align-items:flex-start}
+.dr-top .x{margin-left:auto;margin-top:-4px}
+.dr-dept{display:inline-flex;gap:7px;align-items:center;font-size:13px;font-weight:700;color:var(--muted)}
+.dr-head h2{font-size:23px;margin-top:3px}
+.dr-when{font-size:14px;color:var(--muted);margin-top:4px;display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
+.status-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.st-btn{all:unset;cursor:pointer;height:34px;padding:0 13px;border-radius:10px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;box-shadow:inset 0 0 0 1px var(--line-2);background:var(--surface)}
+.st-btn svg{width:15px;height:15px}
+.st-btn:hover{box-shadow:inset 0 0 0 1px var(--fg)}
+.st-btn:focus-visible{outline:2px solid var(--saffron)}
+.st-btn[aria-pressed="true"][data-s="Scheduled"]{background:var(--fg);color:var(--bg);box-shadow:none}
+.st-btn[aria-pressed="true"][data-s="Completed"]{background:var(--done);color:#fff;box-shadow:none}
+.st-btn[aria-pressed="true"][data-s="Postponed"]{background:var(--moved);color:#fff;box-shadow:none}
+.st-btn[aria-pressed="true"][data-s="Cancelled"]{background:var(--cancel);color:#fff;box-shadow:none}
+.where{display:inline-flex;gap:5px;align-items:center}
+.where svg{width:14px;height:14px}
+.where-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.where-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.where-row .inp{flex:1 1 220px;height:36px}
+.where-lab{font-size:13.5px;font-weight:700;margin-right:4px}
+.where-box .btn.ghost{align-self:flex-start;padding:0 6px;color:var(--saffron-ink)}
+.tri.wide button{display:inline-flex;gap:6px;align-items:center;height:30px;padding:0 12px}
+.tri.wide button svg{width:15px;height:15px}
+.tri button[aria-pressed="true"][data-m]{}
+.where-box .tri button[aria-pressed="true"]{background:var(--brand);color:var(--on-brand)}
+.st-extra{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:13.5px;flex-wrap:wrap}
+.st-extra label{font-weight:600}
+input[type=date],.inp{height:38px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:0 11px;min-width:0}
+.inp::placeholder,textarea::placeholder{color:var(--muted)}
+.dr-tabs{display:flex;gap:4px;margin-top:16px;overflow-x:auto}
+.dr-tabs button{all:unset;cursor:pointer;padding:10px 12px 12px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2.5px solid transparent;display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
+.dr-tabs button:hover{color:var(--fg)}
+.dr-tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--saffron)}
+.dr-tabs button:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.dr-tabs .n{font-size:11.5px;font-weight:700;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:1px 7px;border-radius:9px}
+.dr-tabs .n.late{background:var(--alert-soft);color:var(--alert);box-shadow:none}
+.dr-body{flex:1;overflow-y:auto;padding:20px 22px 28px;display:flex;flex-direction:column;gap:18px}
+.dr-foot{background:var(--surface);border-top:1px solid var(--line);padding:12px 22px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dr-foot .sp{flex:1}
+.dr-foot .lab{font-size:12.5px;color:var(--muted);font-weight:600}
+.fld{display:flex;flex-direction:column;gap:7px}
+.fld>label{font-size:14px;font-weight:700}
+.fld>label small{font-weight:500;color:var(--muted);margin-left:6px}
+.fld textarea{border:1px solid var(--line-2);border-radius:12px;background:var(--surface);padding:12px 14px;min-height:150px;resize:vertical;line-height:1.55;width:100%}
+.addbar{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+.addbar .inp{flex:1 1 200px;border-color:var(--line)}
+.addbar .inp.ow{flex:0 1 160px}
+.addbar input[type=date]{flex:0 1 150px;border-color:var(--line)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.att-list,.act-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.att-list li{display:flex;align-items:center;gap:12px;padding:9px 10px 9px 12px;border-top:1px solid var(--line)}
+.att-list li:first-child{border-top:0}
+.att-list .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-list li.Apology .nm,.att-list li.Absent .nm{color:var(--muted)}
+.tri{display:inline-flex;background:var(--surface-2);border-radius:9px;padding:2px;box-shadow:inset 0 0 0 1px var(--line)}
+.tri button{all:unset;cursor:pointer;height:28px;padding:0 10px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.tri button:focus-visible{outline:2px solid var(--saffron)}
+.tri button[aria-pressed="true"][data-s="Present"]{background:var(--done);color:#fff}
+.tri button[aria-pressed="true"][data-s="Apology"]{background:var(--moved);color:#fff}
+.tri button[aria-pressed="true"][data-s="Absent"]{background:var(--alert);color:#fff}
+.tri button[aria-pressed="true"][data-s="Open"]{background:var(--fg);color:var(--bg)}
+.tri button[aria-pressed="true"][data-s="In progress"]{background:var(--moved);color:#fff}
+.tri button[aria-pressed="true"][data-s="Done"]{background:var(--done);color:#fff}
+.act-list li{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;gap:4px 10px;padding:12px 10px 12px 12px;border-top:1px solid var(--line);align-items:start}
+.act-list li:first-child{border-top:0}
+.act-list .chk{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--line-2);display:grid;place-items:center;color:transparent;margin-top:4px}
+.act-list .chk:hover{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
+.act-list .chk[aria-pressed="true"]{background:var(--done);color:#fff;box-shadow:none}
+.act-list .chk svg{width:15px;height:15px}
+.act-list .chk:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.act-list .tx{border:1px solid transparent;border-radius:8px;padding:5px 8px;width:100%;font-weight:600;background:transparent;margin-left:-8px}
+.act-list .tx:hover{border-color:var(--line)}
+.act-list .tx:focus{border-color:var(--line-2);background:var(--surface)}
+.act-list li.done .tx{text-decoration:line-through;color:var(--muted)}
+.act-list .sub{grid-column:2;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.act-list .sub .inp{height:32px;flex:0 1 150px;font-size:13px;border-color:var(--line)}
+.act-list .sub input[type=date]{height:32px;font-size:13px;border-color:var(--line)}
+.act-list li.late input[type=date]{border-color:var(--alert);color:var(--alert)}
+
+/* ---------- popover & toast ---------- */
+.pop{position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-2);padding:6px;width:290px;display:flex;flex-direction:column}
+.pop button{all:unset;cursor:pointer;padding:9px 11px;border-radius:9px;display:grid;grid-template-columns:22px 1fr;gap:2px 10px;align-items:center;font-size:14px;font-weight:600}
+.pop button svg{width:18px;height:18px;color:var(--muted);grid-row:span 2}
+.pop button small{font-size:12.5px;color:var(--muted);font-weight:500}
+.pop button:hover,.pop button:focus-visible{background:var(--surface-2)}
+.pop hr{border:0;border-top:1px solid var(--line);margin:5px 0}
+.dr-upd{font-size:12.5px;color:var(--muted);margin-top:auto;padding-top:6px}
+.side-btn.who{border-style:dashed;font-weight:500;font-size:13px}
+.side-btn.who span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop .ph{font-size:12px;color:var(--muted);font-weight:700;padding:6px 11px 2px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:90;box-shadow:var(--shadow-2);display:flex;gap:8px;align-items:center}
+.toast svg{width:17px;height:17px;color:var(--done)}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){.c7,.c5{grid-column:span 12}}
+@media (max-width:900px){
+  .side{display:none}
+  .main{margin-left:0;padding-block:14px calc(92px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .mob-actions{display:flex}
+  .topbar h1{font-size:22px}
+  .search{flex-basis:100%;order:3}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .tabbar button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted);padding:5px 0;position:relative;border-radius:10px}
+  .tabbar button svg{width:22px;height:22px}
+  .tabbar button[aria-current="page"]{color:var(--fg)}
+  .tabbar button[aria-current="page"] svg{color:var(--saffron)}
+  .tabbar button:focus-visible{outline:2px solid var(--saffron)}
+  .tabbar .badge{position:absolute;top:0;left:calc(50% + 6px);height:17px;min-width:17px;font-size:10.5px}
+  .hero{grid-template-columns:1fr;padding:22px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .c6{grid-column:span 12}
+  .board{grid-template-columns:1fr}
+  .row{grid-template-columns:52px minmax(0,1fr) 38px;gap:12px}
+  .row .rec,.row .pill{grid-column:2}
+  .row .rec{grid-row:2}
+  .row .pill{grid-row:3;justify-self:start}
+  .row .tick{grid-column:3;grid-row:1/span 3}
+  .row .dbox{grid-row:1/span 3;align-self:start}
+}
+:root[data-theme="dark"] .tabbar button[aria-current="page"]{color:var(--saffron)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tabbar button[aria-current="page"]{color:var(--saffron)}}
+@media (max-width:560px){
+  .filters{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px 6px;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .filters .chip,.filters .select{flex:none}
+  .filters .select{margin-left:0}
+  .list-head .seg{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+  .list-head .seg button{flex:none}
+  .stat{grid-template-columns:36px 1fr;padding:12px}.stat .ic{width:36px;height:36px}
+  .stat b{font-size:20px}
+  .depts{grid-template-columns:1fr}
+  .cell{min-height:56px;padding:4px}.ev,.more{display:none}.dots{display:flex}
+  .mc{padding-left:22px}.mc-bars,.mc-grid{left:22px}.mc-bars{gap:2px}.mc-lab{font-size:10.5px}.mc-val{font-size:10.5px}
+  .ppl li{grid-template-columns:30px minmax(0,1fr) 70px 36px}
+  .att-list li{flex-wrap:wrap}.att-list .nm{flex-basis:calc(100% - 50px)}
+  .dr-body{padding:16px}
+  .dr-head{padding-left:18px;padding-right:max(16px,env(safe-area-inset-right,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<aside class="side" aria-label="Main">
+  <div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8.5 15l2.3 2.3 4.7-4.6"/></svg></div><div><b>Meeting Tracker</b><small>BAPS Australia</small></div></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="side-foot">
+    <button class="side-btn primary" type="button" data-pop="dl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 4.5 5-4.5M5 20h14"/></svg>Download</button>
+    <button class="side-btn" type="button" data-pop="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Backup</button>
+    <button class="side-btn who" type="button" id="who"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6.5 8-6.5s7.2 2.5 8 6.5"/></svg><span id="who-name">Set your name</span></button>
+    <div class="saved" id="saved"><i></i><span>Connecting…</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="inner">
+    <header class="topbar">
+      <div class="ttl"><h1 id="page-title">Dashboard</h1><p id="page-sub"></p></div>
+      <div class="mob-actions">
+        <button class="icon-btn" type="button" data-pop="dl" aria-label="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 4.5 5-4.5M5 20h14"/></svg></button>
+        <button class="icon-btn" type="button" data-pop="bk" aria-label="Backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></button>
+      </div>
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Search meetings, notes, people, actions" aria-label="Search meetings, notes, people and actions"></label>
+    </header>
+    <div class="filters" id="filters"></div>
+    <main id="view"></main>
+  </div>
+</div>
+
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" hidden></aside>
+<div class="pop" id="pop" hidden role="menu"></div>
+<div class="toast" id="toast" hidden role="status"></div>
+<datalist id="people"></datalist>
+<datalist id="places"></datalist>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB_URL="https://qifmrrsqsoybylcwchwz.supabase.co", SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpZm1ycnNxc295YnlsY3djaHd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODM3MTksImV4cCI6MjEwNzg1OTcxOX0.YMQHdUfimrIvSY70djwlsD8m-P8_l5Yf2SYBuSXBkMo";
+const DATA = {"meetings": [{"id": "2026-10-09_akshardham-project-admin", "date": "2026-10-09", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-10-09_kitchen-local-leads", "date": "2026-10-09", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No", "seed": {"status": "Postponed", "postponedTo": "2026-10-14", "completedOn": "", "notes": ""}}, {"id": "2026-10-12_dharmada-national-lead", "date": "2026-10-12", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-10-12_shayona-marketing", "date": "2026-10-12", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2026-10-13_shayona-local-leads", "date": "2026-10-13", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-10-17_capital-projects-national-lead", "date": "2026-10-17", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-10-17_shayona-national-admin", "date": "2026-10-17", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-10-18_accounts-local-leads", "date": "2026-10-18", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-10-20_accounts-national-admin", "date": "2026-10-20", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-10-23_akshardham-project-admin", "date": "2026-10-23", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-10-26_kitchen-national-admin", "date": "2026-10-26", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-10-26_shayona-marketing", "date": "2026-10-26", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2026-10-27_accounts-central-accounts-lead", "date": "2026-10-27", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2026-11-03_shayona-nativ-farms", "date": "2026-11-03", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2026-11-09_dharmada-national-lead", "date": "2026-11-09", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-11-09_shayona-marketing", "date": "2026-11-09", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2026-11-10_shayona-local-leads", "date": "2026-11-10", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-11-13_akshardham-project-admin", "date": "2026-11-13", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-11-13_kitchen-local-leads", "date": "2026-11-13", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2026-11-15_accounts-local-leads", "date": "2026-11-15", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-11-17_accounts-national-admin", "date": "2026-11-17", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-11-20_kitchen-mslt", "date": "2026-11-20", "dept": "Kitchen", "level": "MSLT", "freq": "Quarterly", "swami": "Yes"}, {"id": "2026-11-20_shayona-mslc", "date": "2026-11-20", "dept": "Shayona", "level": "MSLC", "freq": "Quarterly", "swami": "Yes"}, {"id": "2026-11-21_capital-projects-national-lead", "date": "2026-11-21", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-11-21_shayona-national-admin", "date": "2026-11-21", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-11-23_kitchen-national-admin", "date": "2026-11-23", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-11-23_shayona-marketing", "date": "2026-11-23", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2026-11-24_accounts-central-accounts-lead", "date": "2026-11-24", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2026-11-27_akshardham-project-admin", "date": "2026-11-27", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-12-01_shayona-nativ-farms", "date": "2026-12-01", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2026-12-08_shayona-local-leads", "date": "2026-12-08", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-12-11_akshardham-project-admin", "date": "2026-12-11", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-12-11_kitchen-local-leads", "date": "2026-12-11", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2026-12-14_dharmada-national-lead", "date": "2026-12-14", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-12-14_shayona-marketing", "date": "2026-12-14", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2026-12-15_accounts-national-admin", "date": "2026-12-15", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-12-19_capital-projects-national-lead", "date": "2026-12-19", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-12-19_shayona-national-admin", "date": "2026-12-19", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-12-20_accounts-local-leads", "date": "2026-12-20", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2026-12-22_accounts-central-accounts-lead", "date": "2026-12-22", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2026-12-25_akshardham-project-admin", "date": "2026-12-25", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2026-12-28_kitchen-national-admin", "date": "2026-12-28", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2026-12-28_shayona-marketing", "date": "2026-12-28", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-01-05_shayona-nativ-farms", "date": "2027-01-05", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-01-08_akshardham-project-admin", "date": "2027-01-08", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-01-08_kitchen-local-leads", "date": "2027-01-08", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-01-11_dharmada-national-lead", "date": "2027-01-11", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-01-11_shayona-marketing", "date": "2027-01-11", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-01-12_shayona-local-leads", "date": "2027-01-12", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-01-16_capital-projects-national-lead", "date": "2027-01-16", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-01-16_shayona-national-admin", "date": "2027-01-16", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-01-17_accounts-local-leads", "date": "2027-01-17", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-01-19_accounts-national-admin", "date": "2027-01-19", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-01-22_akshardham-project-admin", "date": "2027-01-22", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-01-25_kitchen-national-admin", "date": "2027-01-25", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-01-25_shayona-marketing", "date": "2027-01-25", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-01-26_accounts-central-accounts-lead", "date": "2027-01-26", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-02-02_shayona-nativ-farms", "date": "2027-02-02", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-02-08_dharmada-national-lead", "date": "2027-02-08", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-02-08_shayona-marketing", "date": "2027-02-08", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-02-09_shayona-local-leads", "date": "2027-02-09", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-02-12_akshardham-project-admin", "date": "2027-02-12", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-02-12_kitchen-local-leads", "date": "2027-02-12", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-02-16_accounts-national-admin", "date": "2027-02-16", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-02-19_kitchen-mslt", "date": "2027-02-19", "dept": "Kitchen", "level": "MSLT", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-02-19_shayona-mslc", "date": "2027-02-19", "dept": "Shayona", "level": "MSLC", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-02-20_capital-projects-national-lead", "date": "2027-02-20", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-02-20_shayona-national-admin", "date": "2027-02-20", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-02-21_accounts-local-leads", "date": "2027-02-21", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-02-22_kitchen-national-admin", "date": "2027-02-22", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-02-22_shayona-marketing", "date": "2027-02-22", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-02-23_accounts-central-accounts-lead", "date": "2027-02-23", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-02-26_akshardham-project-admin", "date": "2027-02-26", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-03-02_shayona-nativ-farms", "date": "2027-03-02", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-03-08_dharmada-national-lead", "date": "2027-03-08", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-03-08_shayona-marketing", "date": "2027-03-08", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-03-09_shayona-local-leads", "date": "2027-03-09", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-03-12_akshardham-project-admin", "date": "2027-03-12", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-03-12_kitchen-local-leads", "date": "2027-03-12", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-03-16_accounts-national-admin", "date": "2027-03-16", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-03-20_capital-projects-national-lead", "date": "2027-03-20", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-03-20_shayona-national-admin", "date": "2027-03-20", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-03-21_accounts-local-leads", "date": "2027-03-21", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-03-22_kitchen-national-admin", "date": "2027-03-22", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-03-22_shayona-marketing", "date": "2027-03-22", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-03-23_accounts-central-accounts-lead", "date": "2027-03-23", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-03-26_akshardham-project-admin", "date": "2027-03-26", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-04-06_shayona-nativ-farms", "date": "2027-04-06", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-04-09_akshardham-project-admin", "date": "2027-04-09", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-04-09_kitchen-local-leads", "date": "2027-04-09", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-04-12_dharmada-national-lead", "date": "2027-04-12", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-04-12_shayona-marketing", "date": "2027-04-12", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-04-13_shayona-local-leads", "date": "2027-04-13", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-04-17_capital-projects-national-lead", "date": "2027-04-17", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-04-17_shayona-national-admin", "date": "2027-04-17", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-04-18_accounts-local-leads", "date": "2027-04-18", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-04-20_accounts-national-admin", "date": "2027-04-20", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-04-23_akshardham-project-admin", "date": "2027-04-23", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-04-26_kitchen-national-admin", "date": "2027-04-26", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-04-26_shayona-marketing", "date": "2027-04-26", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-04-27_accounts-central-accounts-lead", "date": "2027-04-27", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-05-04_shayona-nativ-farms", "date": "2027-05-04", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-05-10_dharmada-national-lead", "date": "2027-05-10", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-05-10_shayona-marketing", "date": "2027-05-10", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-05-11_shayona-local-leads", "date": "2027-05-11", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-05-14_akshardham-project-admin", "date": "2027-05-14", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-05-14_kitchen-local-leads", "date": "2027-05-14", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-05-15_capital-projects-national-lead", "date": "2027-05-15", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-05-15_shayona-national-admin", "date": "2027-05-15", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-05-16_accounts-local-leads", "date": "2027-05-16", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-05-18_accounts-national-admin", "date": "2027-05-18", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-05-21_kitchen-mslt", "date": "2027-05-21", "dept": "Kitchen", "level": "MSLT", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-05-21_shayona-mslc", "date": "2027-05-21", "dept": "Shayona", "level": "MSLC", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-05-24_kitchen-national-admin", "date": "2027-05-24", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-05-24_shayona-marketing", "date": "2027-05-24", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-05-25_accounts-central-accounts-lead", "date": "2027-05-25", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-05-28_akshardham-project-admin", "date": "2027-05-28", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-06-01_shayona-nativ-farms", "date": "2027-06-01", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-06-08_shayona-local-leads", "date": "2027-06-08", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-06-11_akshardham-project-admin", "date": "2027-06-11", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-06-11_kitchen-local-leads", "date": "2027-06-11", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-06-14_dharmada-national-lead", "date": "2027-06-14", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-06-14_shayona-marketing", "date": "2027-06-14", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-06-15_accounts-national-admin", "date": "2027-06-15", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-06-19_capital-projects-national-lead", "date": "2027-06-19", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-06-19_shayona-national-admin", "date": "2027-06-19", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-06-20_accounts-local-leads", "date": "2027-06-20", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-06-22_accounts-central-accounts-lead", "date": "2027-06-22", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-06-25_akshardham-project-admin", "date": "2027-06-25", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-06-28_kitchen-national-admin", "date": "2027-06-28", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-06-28_shayona-marketing", "date": "2027-06-28", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-07-06_shayona-nativ-farms", "date": "2027-07-06", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-07-09_akshardham-project-admin", "date": "2027-07-09", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-07-09_kitchen-local-leads", "date": "2027-07-09", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-07-12_dharmada-national-lead", "date": "2027-07-12", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-07-12_shayona-marketing", "date": "2027-07-12", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-07-13_shayona-local-leads", "date": "2027-07-13", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-07-17_capital-projects-national-lead", "date": "2027-07-17", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-07-17_shayona-national-admin", "date": "2027-07-17", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-07-18_accounts-local-leads", "date": "2027-07-18", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-07-20_accounts-national-admin", "date": "2027-07-20", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-07-23_akshardham-project-admin", "date": "2027-07-23", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-07-26_kitchen-national-admin", "date": "2027-07-26", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-07-26_shayona-marketing", "date": "2027-07-26", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-07-27_accounts-central-accounts-lead", "date": "2027-07-27", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-08-03_shayona-nativ-farms", "date": "2027-08-03", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-08-09_dharmada-national-lead", "date": "2027-08-09", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-08-09_shayona-marketing", "date": "2027-08-09", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-08-10_shayona-local-leads", "date": "2027-08-10", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-08-13_akshardham-project-admin", "date": "2027-08-13", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-08-13_kitchen-local-leads", "date": "2027-08-13", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-08-15_accounts-local-leads", "date": "2027-08-15", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-08-17_accounts-national-admin", "date": "2027-08-17", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-08-20_kitchen-mslt", "date": "2027-08-20", "dept": "Kitchen", "level": "MSLT", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-08-20_shayona-mslc", "date": "2027-08-20", "dept": "Shayona", "level": "MSLC", "freq": "Quarterly", "swami": "Yes"}, {"id": "2027-08-21_capital-projects-national-lead", "date": "2027-08-21", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-08-21_shayona-national-admin", "date": "2027-08-21", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-08-23_kitchen-national-admin", "date": "2027-08-23", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-08-23_shayona-marketing", "date": "2027-08-23", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-08-24_accounts-central-accounts-lead", "date": "2027-08-24", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-08-27_akshardham-project-admin", "date": "2027-08-27", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-09-07_shayona-nativ-farms", "date": "2027-09-07", "dept": "Shayona", "level": "Nativ Farms", "freq": "Monthly", "swami": "Occasionally"}, {"id": "2027-09-10_akshardham-project-admin", "date": "2027-09-10", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-09-10_kitchen-local-leads", "date": "2027-09-10", "dept": "Kitchen", "level": "Local Leads", "freq": "Bi-monthly", "swami": "No"}, {"id": "2027-09-13_dharmada-national-lead", "date": "2027-09-13", "dept": "Dharmada", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-09-13_shayona-marketing", "date": "2027-09-13", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-09-14_shayona-local-leads", "date": "2027-09-14", "dept": "Shayona", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-09-18_capital-projects-national-lead", "date": "2027-09-18", "dept": "Capital Projects", "level": "National Lead", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-09-18_shayona-national-admin", "date": "2027-09-18", "dept": "Shayona", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-09-19_accounts-local-leads", "date": "2027-09-19", "dept": "Accounts", "level": "Local Leads", "freq": "Monthly", "swami": "No"}, {"id": "2027-09-21_accounts-national-admin", "date": "2027-09-21", "dept": "Accounts", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-09-24_akshardham-project-admin", "date": "2027-09-24", "dept": "Akshardham", "level": "Project Admin", "freq": "Fortnightly", "swami": "Yes"}, {"id": "2027-09-27_kitchen-national-admin", "date": "2027-09-27", "dept": "Kitchen", "level": "National Admin", "freq": "Monthly", "swami": "Yes"}, {"id": "2027-09-27_shayona-marketing", "date": "2027-09-27", "dept": "Shayona", "level": "Marketing", "freq": "Fortnightly", "swami": "Occasionally"}, {"id": "2027-09-28_accounts-central-accounts-lead", "date": "2027-09-28", "dept": "Accounts", "level": "Central Accounts Lead", "freq": "Monthly", "swami": "Occasionally"}], "unscheduled": [{"dept": "Akshardham", "level": "Project Lead", "freq": "Daily", "swami": "Occasionally"}, {"dept": "Shayona", "level": "Board", "freq": "Quarterly", "swami": "Occasionally"}, {"dept": "Shayona", "level": "Local - Sydney", "freq": "Monthly", "swami": "Yes"}, {"dept": "Shayona", "level": "Local Production", "freq": "Monthly", "swami": "Occasionally"}, {"dept": "Capital Projects", "level": "Shepparton", "freq": "Monthly", "swami": "Yes"}, {"dept": "Capital Projects", "level": "Perth South", "freq": "Monthly", "swami": "Yes"}, {"dept": "Capital Projects", "level": "Ballarat", "freq": "Monthly", "swami": "Yes"}, {"dept": "Capital Projects", "level": "Darwin", "freq": "Monthly", "swami": "Yes"}]};
+const KEY='baps-meeting-tracker-v1', PREF='baps-meeting-tracker-prefs-v3';
+const DEPTS=['Shayona','Kitchen','Accounts','Akshardham','Capital Projects','Dharmada'];
+const STATUSES=['Scheduled','Completed','Postponed','Cancelled'];
+const ACT_ST=['Open','In progress','Done'];
+const SL={Scheduled:'Scheduled',Completed:'Completed',Postponed:'Rescheduled',Cancelled:'Cancelled'};
+const TODAY=(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());})();
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const ymd=d=>iso(d).replace(/-/g,'');
+const fmt=(d,o)=>d.toLocaleDateString('en-AU',o);
+const TODAY_ISO=iso(TODAY);
+const short=d=>fmt(parse(d),{day:'numeric',month:'short'});
+const long=d=>fmt(parse(d),{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const plural=(n,w,p)=>`${n} ${n===1?w:(p||w+'s')}`;
+
+const I={
+  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="9" rx="2"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="2"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="2"/><rect x="3" y="15" width="7.5" height="6" rx="2"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>',
+  task:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.2l2.7 2.7L16 9.5"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  l:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  r:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+  ppl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.3-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4.2 4.1 1.9 4.5 4.5"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  ics:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v5M9.5 15.5L12 18l2.5-2.5"/></svg>',
+  sheet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M3.5 9h17M3.5 14.5h17M9.5 9v11.5"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 8.5L12 4l5 4.5M5 20h14"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 4.5 5-4.5M5 20h14"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12.5" height="12.5" rx="2.5"/><path d="M16 8V5.5A2 2 0 0 0 14 3.5H5.5a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2H8"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12M13 7l5 5-5 5"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/></svg>',
+  ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2"/></svg>'
+};
+
+/* ---------- state ---------- */
+let store={},storageOK=true,SB=null,LIVE=false,pending=0,wq=Promise.resolve();
+const CONFIGURED=!SB_URL.startsWith('__')&&!!window.supabase;
+let myName='';try{myName=localStorage.getItem('baps-meeting-tracker-name')||'';}catch(e){}
+if(!CONFIGURED){try{store=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){storageOK=false;}}
+let ui={view:'dash',dept:'',swami:'',q:'',lst:'open',month:TODAY_ISO.slice(0,7),day:null,dashBy:'dept',owner:'',drawer:null,tab:'notes'};
+try{const p=JSON.parse(localStorage.getItem(PREF)||'null');if(p)Object.assign(ui,{view:['dash','list','month','actions'].includes(p.view)?p.view:'dash',dept:p.dept||'',swami:p.swami||'',lst:p.lst||'open'});}catch(e){}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({view:ui.view,dept:ui.dept,swami:ui.swami,lst:ui.lst}));}catch(e){}}
+function setSync(st){const s=document.getElementById('saved');if(!s)return;
+  const T={connecting:['Connecting…',false],live:['Live · everyone sees changes',false],saving:['Saving…',false],err:['Offline · changes not saved',true],local:[storageOK?'Not online yet · saved in this browser':'Can\'t save here. Use Backup',!storageOK]};
+  const[x,b]=T[st]||T.local;s.classList.toggle('bad',b);s.lastElementChild.textContent=x;}
+function persist(id,rec){
+  if(!CONFIGURED){try{localStorage.setItem(KEY,JSON.stringify(store));storageOK=true;}catch(e){storageOK=false;}setSync('local');return;}
+  if(!id)return;pending++;setSync('saving');
+  const go=()=>SB.from('meetings').upsert({id,data:rec,updated_at:new Date().toISOString()}).then(r=>{if(r.error)throw r.error;});
+  wq=wq.then(()=>go().catch(()=>new Promise(r=>setTimeout(r,800)).then(go)))
+    .then(()=>{pending--;setSync(pending?'saving':'live');})
+    .catch(e=>{pending--;setSync('err');toast('Could not save that change. Check your internet connection and try again',true);console.error(e);});}
+function askName(){const n=prompt('Your name (shown to others as who made each change):',myName||'');if(n===null)return false;const v=n.trim();if(!v)return false;
+  myName=v;try{localStorage.setItem('baps-meeting-tracker-name',v);}catch(e){}const el=document.getElementById('who-name');if(el)el.textContent='Editing as '+v;return true;}
+const DEF=()=>({status:'Scheduled',postponedTo:'',completedOn:'',notes:'',agenda:'',attendees:[],actions:[],mode:'',location:'',link:''});
+function track(m){return {...DEF(),...(store[m.id]||m.seed||{})};}
+let blockT=0;
+function setTrack(m,patch){
+  if(CONFIGURED&&!LIVE){toast('Still connecting. Try again in a moment',true);blockT=Date.now();return false;}
+  if(CONFIGURED&&!myName&&!askName()){toast('Add your name first so others can see who made the change',true);blockT=Date.now();return false;}
+  const rec={...track(m),...patch,updated:new Date().toISOString(),updatedBy:myName};store[m.id]=rec;persist(m.id,rec);return true;}
+const uid=()=>Math.random().toString(36).slice(2,10);
+const M=DATA.meetings, BYID=Object.fromEntries(M.map(m=>[m.id,m]));
+const MONTHS=(()=>{const o=[];for(let i=0;i<12;i++)o.push(iso(new Date(2026,9+i,1)).slice(0,7));return o;})();
+function eff(m){const t=track(m);return t.status==='Postponed'&&t.postponedTo?t.postponedTo:m.date;}
+function derived(m){const t=track(m);
+  if((t.status==='Scheduled'||t.status==='Postponed')&&eff(m)<TODAY_ISO)return'need';
+  if(t.status==='Postponed'&&!t.postponedTo)return'need';
+  return t.status;}
+const overdue=a=>a.status!=='Done'&&a.due&&a.due<TODAY_ISO;
+const dueSoon=a=>a.status!=='Done'&&a.due&&a.due>=TODAY_ISO&&(parse(a.due)-TODAY)/864e5<=7;
+const title=m=>`${m.dept} – ${m.level} meeting`;
+const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+const hue=n=>{let x=0;for(const c of n)x=(x*31+c.charCodeAt(0))%360;return x;};
+
+function h(tag,attrs={},...kids){const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;if(k==='class')n.className=v;else if(k==='text')n.textContent=v;else if(k==='html')n.innerHTML=v;else if(k==='value')n.value=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else n.setAttribute(k,v===true?'':v);}kids.flat().forEach(c=>c!=null&&c!==false&&n.append(c));return n;}
+const ic=(k,cls)=>h('span',{class:cls||null,html:I[k],style:'display:inline-flex','aria-hidden':'true'});
+function av(name){return h('span',{class:'av',style:`--h:${hue(name)}`,text:initials(name)||'?','aria-hidden':'true'});}
+function toast(msg,force){if(!force&&Date.now()-blockT<600)return;const t=document.getElementById('toast');t.replaceChildren(ic('check'),msg);t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2400);}
+function people(){const s=new Set();for(const r of Object.values(store)){(r.attendees||[]).forEach(a=>a.name&&s.add(a.name));(r.actions||[]).forEach(a=>a.owner&&s.add(a.owner));}return[...s].sort((a,b)=>a.localeCompare(b));}
+function refreshPeople(){document.getElementById('people').replaceChildren(...people().map(n=>h('option',{value:n})));
+  const pl=new Set(Object.values(store).map(r=>r.location).filter(Boolean));document.getElementById('places').replaceChildren(...[...pl].sort().map(n=>h('option',{value:n})));}
+
+/* ---------- filters ---------- */
+function matchBase(m){const t=track(m);
+  if(ui.dept&&m.dept!==ui.dept)return false;
+  if(ui.swami&&m.swami!==ui.swami)return false;
+  if(ui.q){const hay=[m.dept,m.level,m.freq,t.notes,t.agenda,t.mode,t.location,...t.attendees.map(a=>a.name),...t.actions.map(a=>a.text+' '+a.owner)].join(' ').toLowerCase();if(!hay.includes(ui.q.toLowerCase()))return false;}
+  return true;}
+const LST={open:['Upcoming',m=>{const d=derived(m);return(d==='Scheduled'||d==='Postponed')&&eff(m)>=TODAY_ISO;}],need:['Needs update',m=>derived(m)==='need'],
+  Completed:['Completed',m=>track(m).status==='Completed'],Postponed:['Rescheduled',m=>track(m).status==='Postponed'],Cancelled:['Cancelled',m=>track(m).status==='Cancelled'],all:['All',()=>true]};
+const base=()=>M.filter(matchBase);
+const byDate=(a,b)=>eff(a).localeCompare(eff(b))||a.dept.localeCompare(b.dept);
+
+/* ---------- shell ---------- */
+const VIEWS=[['dash','Dashboard','dash'],['list','Meetings','list'],['month','Calendar','cal'],['actions','Action items','task']];
+function renderShell(){
+  const need=M.filter(m=>derived(m)==='need').length;
+  const od=M.flatMap(m=>track(m).actions).filter(overdue).length;
+  const badge=k=>k==='list'&&need?h('span',{class:'badge alert',text:need,'aria-label':need+' need update'}):k==='actions'&&od?h('span',{class:'badge alert',text:od,'aria-label':od+' overdue'}):null;
+  const mk=()=>VIEWS.map(([k,l,i])=>h('button',{type:'button','aria-current':ui.view===k?'page':null,onclick:()=>go(k)},ic(i),h('span',{text:l}),badge(k)));
+  document.getElementById('nav').replaceChildren(...mk());
+  document.getElementById('tabbar').replaceChildren(...mk());
+  const T={dash:['Dashboard',fmt(TODAY,{weekday:'long',day:'numeric',month:'long',year:'numeric'})],list:['Meetings','Click a meeting to record its agenda, attendance, notes and actions'],
+    month:['Calendar','Oct 2026 – Sep 2027'],actions:['Action items','Everything agreed in meetings, and where it is up to']};
+  document.getElementById('page-title').textContent=T[ui.view][0];document.getElementById('page-sub').textContent=T[ui.view][1];
+  const f=document.getElementById('filters');
+  const sw=h('select',{class:'select','aria-label':"Swami's presence",onchange:e=>{ui.swami=e.target.value;savePrefs();render();}},
+    [['','Swami: any'],['Yes','Swami required'],['Occasionally','Swami occasionally'],['No','Swami not required']].map(([v,l])=>{const o=h('option',{value:v,text:l});if(v===ui.swami)o.selected=true;return o;}));
+  f.replaceChildren(...[''].concat(DEPTS).map(d=>h('button',{type:'button',class:'chip','data-dept':d||null,'aria-pressed':String(ui.dept===d),onclick:()=>{ui.dept=d;savePrefs();render();}},d?h('i',{class:'dot'}):null,d||'All departments')),sw);
+}
+function go(v,extra){Object.assign(ui,{view:v},extra||{});savePrefs();hideTip();render();scrollTo({top:0});}
+
+/* ---------- dashboard ---------- */
+let tip;
+function showTip(el,html){if(!tip){tip=h('div',{class:'tip',role:'tooltip'});document.body.append(tip);}tip.innerHTML=html;tip.hidden=false;
+  const r=el.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;let x=Math.max(8,Math.min(r.left+r.width/2-tw/2,innerWidth-tw-8));let y=r.top-th-8;if(y<8)y=r.bottom+8;tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){if(tip)tip.hidden=true;}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderDash(v){
+  const B=base();
+  const up=B.filter(m=>eff(m)>=TODAY_ISO&&track(m).status!=='Cancelled').sort(byDate);
+  const todays=up.filter(m=>eff(m)===TODAY_ISO);
+  const wkEnd=iso(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+7));
+  const week=up.filter(m=>eff(m)<wkEnd);
+  const need=B.filter(m=>derived(m)==='need');
+  const hr=new Date().getHours();
+  const head=todays.length?`${plural(todays.length,'meeting')} today`:week.length?`${plural(week.length,'meeting')} in the next 7 days`:'No meetings this week';
+  const nx=up.slice(0,3).map(m=>{const d=parse(eff(m));const isT=eff(m)===TODAY_ISO;const days=Math.round((d-TODAY)/864e5);
+    return h('button',{type:'button',class:'nx','data-dept':m.dept,onclick:()=>openDrawer(m.id)},
+      h('span',{class:'d'},h('small',{text:fmt(d,{month:'short'})}),h('b',{text:d.getDate()})),
+      h('span',{class:'t'},h('b',{text:m.level}),h('span',{text:`${m.dept} · ${fmt(d,{weekday:'long'})}`})),
+      h('span',{class:'tg'+(isT?'':' soft'),text:isT?'Today':days===1?'Tomorrow':`In ${days} days`}));});
+  v.append(h('section',{class:'hero'},
+    h('div',{},h('div',{class:'hi',text:'Jai Swaminarayan'}),h('h2',{text:head}),h('div',{class:'when',text:fmt(TODAY,{weekday:'long',day:'numeric',month:'long'})+(ui.dept?` · ${ui.dept} only`:'')}),
+      need.length?h('button',{type:'button',class:'warn',onclick:()=>go('list',{lst:'need'})},h('i'),`${plural(need.length,'past meeting')} need${need.length===1?'s':''} updating`):null),
+    h('div',{class:'next'},h('div',{class:'lbl',text:'Coming up'}),nx.length?nx:h('div',{class:'hi',text:'Nothing scheduled.'}))));
+
+  const thisM=B.filter(m=>eff(m).startsWith(TODAY_ISO.slice(0,7))&&track(m).status!=='Cancelled');
+  const due=B.filter(m=>eff(m)<=TODAY_ISO||track(m).status!=='Scheduled');const held=due.filter(m=>track(m).status==='Completed').length;
+  const acts=B.flatMap(m=>track(m).actions);const openA=acts.filter(a=>a.status!=='Done').length,odA=acts.filter(overdue).length;
+  const stat=(cls,i,n,l,on)=>h('button',{type:'button',class:'stat '+cls,onclick:on},h('span',{class:'ic',html:I[i]}),h('b',{text:n}),h('span',{text:l}));
+  v.append(h('div',{class:'stats'},
+    stat('s-month','cal',thisM.length,'meetings this month',()=>go('month',{month:TODAY_ISO.slice(0,7),day:null})),
+    stat('s-done','check',`${held}/${due.length}`,'completed so far',()=>go('list',{lst:'Completed'})),
+    stat('s-need','alert',need.length,'need updating',()=>go('list',{lst:'need'})),
+    stat('s-act','task',openA,odA?`open actions · ${odA} overdue`:'open actions',()=>go('actions'))));
+
+  const g=h('div',{class:'dgrid'});v.append(g);
+  g.append(chartCard(B));
+  g.append(deptCard());
+  // actions
+  const openList=B.flatMap(m=>track(m).actions.map(a=>({m,a}))).filter(x=>x.a.status!=='Done').sort((p,q)=>(p.a.due||'9999').localeCompare(q.a.due||'9999')).slice(0,6);
+  g.append(h('section',{class:'card c7'},h('div',{class:'card-h'},h('div',{},h('h3',{text:'Actions due next'}),h('p',{text:acts.length?`${acts.filter(a=>a.status==='Done').length} of ${acts.length} done`:'Actions you add inside meetings appear here'})),
+      h('button',{type:'button',class:'btn sm',text:'Open board',onclick:()=>go('actions')})),
+    acts.length?h('div',{class:'bar',role:'img','aria-label':'Action progress'},
+      h('i',{style:`width:${acts.filter(a=>a.status==='Done').length/acts.length*100}%;background:var(--done)`}),h('i',{style:`width:${acts.filter(a=>a.status==='In progress').length/acts.length*100}%;background:var(--moved)`})):null,
+    openList.length?h('ul',{class:'alist-mini'},openList.map(x=>h('li',{},x.a.owner?av(x.a.owner):h('span',{class:'av',style:'--h:0;background:var(--sched)',text:'?'}),
+      h('div',{class:'tx'},h('b',{text:x.a.text}),h('small',{text:`${x.a.owner||'No owner'} · ${x.m.dept} ${x.m.level}`})),dueChip(x.a)))):
+      h('div',{class:'empty',style:'padding:20px'},acts.length?'All actions are done.':'Open a meeting, then use the Action items tab to add what was agreed.')));
+  // attendance
+  const rec=B.filter(m=>track(m).attendees.length);const per={};
+  rec.forEach(m=>track(m).attendees.forEach(a=>{const p=per[a.name]??={n:a.name,Present:0,Apology:0,Absent:0};p[a.att]++;}));
+  const pl=Object.values(per).sort((a,b)=>b.Present-a.Present||a.n.localeCompare(b.n)).slice(0,7);const mx=Math.max(1,...pl.map(p=>p.Present+p.Apology+p.Absent));
+  const tp=rec.reduce((s,m)=>s+track(m).attendees.filter(a=>a.att==='Present').length,0);
+  g.append(h('section',{class:'card c5'},h('div',{class:'card-h'},h('div',{},h('h3',{text:'Attendance'}),h('p',{text:rec.length?`Recorded at ${plural(rec.length,'meeting')}`:'Record who came inside each meeting'}))),
+    h('div',{class:'mini-stats'},h('div',{},h('b',{text:rec.length?(tp/rec.length).toFixed(1):'–'}),h('span',{text:'average present'})),h('div',{},h('b',{text:Object.keys(per).length}),h('span',{text:'people recorded'}))),
+    pl.length?h('ul',{class:'ppl'},pl.map(p=>h('li',{},av(p.n),h('span',{class:'pn',text:p.n}),
+      h('span',{class:'pb',title:`${p.Present} present, ${p.Apology} apologies, ${p.Absent} absent`},h('i',{style:`width:${p.Present/mx*100}%;background:var(--done)`}),h('i',{style:`width:${p.Apology/mx*100}%;background:var(--moved)`}),h('i',{style:`width:${p.Absent/mx*100}%;background:var(--alert)`})),
+      h('span',{class:'pc',text:`${p.Present}/${p.Present+p.Apology+p.Absent}`})))):null,
+    pl.length?h('div',{class:'legend',style:'font-size:12.5px;color:var(--muted)'},h('span',{},h('i',{style:'background:var(--done)'}),'Present'),h('span',{},h('i',{style:'background:var(--moved)'}),'Apology'),h('span',{},h('i',{style:'background:var(--alert)'}),'Absent')):null));
+  g.append(h('section',{class:'card c12'},h('div',{class:'card-h'},h('div',{},h('h3',{text:'Not on the calendar yet'}),h('p',{text:'These have no Week # or Day on the Meeting Record, so no dates were made for them.'}))),
+    h('div',{class:'uns'},DATA.unscheduled.map(u=>h('span',{'data-dept':u.dept},h('i',{class:'dot'}),h('b',{text:u.level}),h('small',{text:`${u.dept} · ${u.freq}`}))))));
+}
+const CH=[['held','var(--c-held)','Completed'],['resch','var(--moved)','Rescheduled'],['cx','var(--c-cx)','Cancelled'],['up','var(--c-up)','Upcoming'],['need','var(--alert)','Not marked yet']];
+function chKey(m){const t=track(m);if(t.status==='Cancelled')return'cx';if(t.status==='Completed')return'held';if(t.status==='Postponed')return'resch';if(eff(m)<TODAY_ISO)return'need';return'up';}
+function chartCard(B){
+  const data=MONTHS.map(k=>{const ms=B.filter(m=>eff(m).startsWith(k));const c={held:0,resch:0,cx:0,up:0,need:0},dp={};ms.forEach(m=>{c[chKey(m)]++;dp[m.dept]=(dp[m.dept]||0)+1;});return{k,total:ms.length,c,dp};});
+  const max=Math.max(4,...data.map(d=>d.total)),step=max<=8?2:max<=20?5:10,top=Math.ceil(max/step)*step,H=220;
+  const grid=h('div',{class:'mc-grid','aria-hidden':'true'});for(let x=0;x<=top;x+=step)grid.append(h('div',{class:'gl',style:`bottom:${x/top*H}px`},h('span',{text:x})));
+  const nowK=TODAY_ISO.slice(0,7);
+  const bars=h('div',{class:'mc-bars'},data.map(d=>{const nm=fmt(parse(d.k+'-01'),{month:'long',year:'numeric'});
+    const col=h('button',{type:'button',class:'mc-col'+(d.k===nowK?' now':''),'aria-label':`${nm}: ${plural(d.total,'meeting')}. ${CH.filter(s=>d.c[s[0]]).map(s=>s[2]+' '+d.c[s[0]]).join(', ')}. Open in calendar`,onclick:()=>go('month',{month:d.k,day:null})});
+    const st=h('div',{class:'mc-stack',style:`height:${d.total/top*H}px`});CH.forEach(s=>{if(d.c[s[0]])st.append(h('i',{style:`flex:${d.c[s[0]]} 0 0;background:${s[1]}`}));});
+    col.append(h('span',{class:'mc-val',text:d.total||''}),st,h('span',{class:'mc-lab',text:fmt(parse(d.k+'-01'),{month:'short'})}));
+    const th=`<b>${nm}</b><br>${plural(d.total,'meeting')}`+CH.filter(s=>d.c[s[0]]).map(s=>`<br><span class="tk" style="--c:${s[1]}"></span>${s[2]}: ${d.c[s[0]]}`).join('')+
+      `<hr>`+DEPTS.filter(x=>d.dp[x]).map(x=>`<span class="tk" data-dept="${x}"></span>${esc(x)}: ${d.dp[x]}`).join('<br>');
+    col.addEventListener('mouseenter',()=>showTip(col,th));col.addEventListener('mouseleave',hideTip);col.addEventListener('focus',()=>showTip(col,th));col.addEventListener('blur',hideTip);return col;}));
+  const tbl=h('table',{class:'dtable'},h('thead',{},h('tr',{},h('th',{text:'Month'}),DEPTS.map(s=>h('th',{text:s})),h('th',{text:'Total'}))),
+    h('tbody',{},data.map(d=>h('tr',{},h('th',{text:fmt(parse(d.k+'-01'),{month:'short',year:'numeric'})}),DEPTS.map(s=>h('td',{text:d.dp[s]||'–'})),h('td',{class:'tot',text:d.total})))),
+    h('tfoot',{},h('tr',{},h('th',{text:'Total'}),DEPTS.map(s=>h('td',{text:data.reduce((a,d)=>a+(d.dp[s]||0),0)})),h('td',{class:'tot',text:data.reduce((a,d)=>a+d.total,0)}))));
+  const busiest=data.reduce((a,d)=>d.total>a.total?d:a,data[0]);
+  return h('section',{class:'card c12'},
+    h('div',{class:'card-h'},h('div',{},h('h3',{text:'Meetings by month'}),h('p',{text:`${plural(data.reduce((a,d)=>a+d.total,0),'meeting')} across the year. Busiest month: ${fmt(parse(busiest.k+'-01'),{month:'long'})} (${busiest.total}). Hover a bar for details, click to open it.`})),
+      h('div',{class:'legend'},CH.filter(s=>s[0]!=='need'||data.some(d=>d.c.need)).map(s=>h('span',{},h('i',{style:`background:${s[1]}`}),s[2]+' ',h('b',{text:data.reduce((a,d)=>a+d.c[s[0]],0)}))))),
+    h('div',{class:'mc',style:`--H:${H}px`},grid,bars),
+    h('details',{class:'tbl'},h('summary',{text:'Show meetings per department each month'}),h('div',{style:'overflow-x:auto'},tbl)));
+}
+function deptCard(){
+  const rows=DEPTS.map(d=>{const ms=M.filter(m=>m.dept===d&&(!ui.swami||m.swami===ui.swami));const c={held:0,resch:0,cx:0,up:0,need:0};ms.forEach(m=>c[chKey(m)]++);
+    const nxt=ms.filter(m=>eff(m)>=TODAY_ISO&&track(m).status!=='Cancelled').sort(byDate)[0];const oa=ms.flatMap(m=>track(m).actions).filter(x=>x.status!=='Done').length;
+    return{d,ms,c,nxt,oa};}).filter(r=>r.ms.length).sort((a,b)=>b.ms.length-a.ms.length);
+  const mx=Math.max(...rows.map(r=>r.ms.length));
+  return h('section',{class:'card c12'},h('div',{class:'card-h'},h('div',{},h('h3',{text:'Meetings by department'}),h('p',{text:'Year total for each department, split by status. Click a department to see its meetings.'}))),
+    h('div',{class:'hbars'},rows.map(r=>h('button',{type:'button',class:'hb','data-dept':r.d,onclick:()=>go('list',{dept:r.d,lst:'open'}),
+        'aria-label':`${r.d}: ${plural(r.ms.length,'meeting')}, ${r.c.up} upcoming, ${r.c.held} completed, ${r.c.resch} rescheduled, ${r.c.cx} cancelled. Show meetings`},
+      h('span',{class:'hb-name'},h('i',{class:'dot'}),r.d),
+      h('span',{class:'hb-track'},h('span',{class:'hb-fill',style:`width:${r.ms.length/mx*100}%`},
+        CH.map(s=>r.c[s[0]]?h('i',{style:`flex:${r.c[s[0]]} 0 0;background:${s[1]}`}):null)),h('b',{class:'hb-n',text:r.ms.length})),
+      h('span',{class:'hb-meta'},h('span',{text:`${r.c.up} upcoming`}),h('span',{text:`${r.c.held} completed`}),r.c.resch?h('span',{text:`${r.c.resch} rescheduled`}):null,r.c.cx?h('span',{text:`${r.c.cx} cancelled`}):null,r.c.need?h('span',{class:'late',text:`${r.c.need} not marked`}):null,h('span',{text:r.nxt?'Next '+short(eff(r.nxt)):'Nothing upcoming'}),r.oa?h('span',{text:plural(r.oa,'open action')}):null)))));
+}
+function dueChip(a){if(!a.due)return h('span',{class:'duechip',text:'No date'});
+  return h('span',{class:'duechip'+(overdue(a)?' late':dueSoon(a)?' soon':''),text:(overdue(a)?'Overdue · ':'Due ')+short(a.due)});}
+
+/* ---------- meetings ---------- */
+function statusPill(m){const d=derived(m),t=track(m);
+  if(d==='need')return h('span',{class:'pill p-need',html:I.alert+(t.status==='Postponed'&&!t.postponedTo?'Needs new date':'Needs update')});
+  if(t.status==='Completed')return h('span',{class:'pill p-Completed',html:I.check+'Completed'});
+  if(eff(m)===TODAY_ISO&&t.status!=='Cancelled')return h('span',{class:'pill p-today',text:'Today'});
+  return h('span',{class:'pill p-'+t.status,text:t.status==='Postponed'?'Rescheduled from '+short(m.date):SL[t.status]});}
+function whereText(t){if(t.mode==='Online')return'Online'+(t.location?' · '+t.location:'');if(t.mode==='In person')return t.location||'In person';return t.location||'';}
+function whereChip(t){const w=whereText(t);if(!w)return null;return h('span',{class:'where'},ic(t.mode==='Online'?'video':'pin'),w);}
+function row(m){const t=track(m),d=parse(eff(m));
+  const pr=t.attendees.filter(a=>a.att==='Present').length,dn=t.actions.filter(a=>a.status==='Done').length,od=t.actions.filter(overdue).length;
+  const r=h('div',{class:'row'+(eff(m)===TODAY_ISO?' is-today':'')+(t.status==='Cancelled'?' is-cancel':'')+(ui.drawer===m.id?' sel':''),role:'button',tabindex:'0','data-dept':m.dept,id:'r-'+m.id,
+      'aria-label':`${title(m)}, ${fmt(d,{weekday:'long',day:'numeric',month:'long'})}. Open details`,
+      onclick:()=>openDrawer(m.id),onkeydown:e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openDrawer(m.id);}}},
+    h('div',{class:'dbox'},h('small',{text:fmt(d,{weekday:'short'})}),h('b',{text:d.getDate()})),
+    h('div',{class:'r-main'},h('div',{class:'t'},m.level,m.swami==='Yes'?h('span',{class:'swami',text:'Swami'}):null),
+      h('div',{class:'s'},h('span',{class:'dp'},h('i',{class:'dot'}),m.dept),h('span',{text:m.freq}),whereChip(t),m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
+    h('div',{class:'rec'},
+      h('span',{class:t.agenda.trim()||t.notes.trim()?'on':'',title:t.agenda.trim()?'Agenda recorded':'No agenda yet',html:I.doc}),
+      h('span',{class:t.attendees.length?'on':'',title:'Attendees present'},ic('ppl'),t.attendees.length?String(pr):''),
+      h('span',{class:od?'late':t.actions.length?'on':'',title:'Actions done'},ic('task'),t.actions.length?`${dn}/${t.actions.length}`:'')),
+    statusPill(m),
+    h('button',{type:'button',class:'tick','aria-pressed':String(t.status==='Completed'),'aria-label':t.status==='Completed'?'Mark as not completed':'Mark as completed',title:t.status==='Completed'?'Undo':'Mark as completed',html:I.check,
+      onclick:e=>{e.stopPropagation();quickDone(m);}}));
+  return r;}
+function quickDone(m){const t=track(m);if(t.status==='Completed'){setTrack(m,{status:'Scheduled',completedOn:''});toast('Marked as not completed');}else{setTrack(m,{status:'Completed',completedOn:eff(m)<=TODAY_ISO?eff(m):TODAY_ISO});toast('Marked as completed');}render();}
+function renderList(v){
+  const B=base();
+  v.append(h('div',{class:'list-head'},h('div',{class:'seg',role:'group','aria-label':'Show'},Object.entries(LST).map(([k,[l,f]])=>{const n=B.filter(f).length;
+    return h('button',{type:'button','aria-pressed':String(ui.lst===k),onclick:()=>{ui.lst=k;savePrefs();render();}},l,h('span',{class:'n'+(k==='need'&&n?' alert':''),text:n}));}))));
+  const need=B.filter(LST.need[1]).length;
+  if(ui.lst==='open'&&need)v.append(h('div',{class:'banner'},ic('alert'),h('p',{},h('b',{text:`${plural(need,'past meeting')} still need${need===1?'s':''} updating. `}),'Tick the ones that were completed, or open them to mark rescheduled or cancelled.'),
+    h('button',{type:'button',class:'btn sm',text:'Show them',onclick:()=>{ui.lst='need';savePrefs();render();}})));
+  const items=B.filter(LST[ui.lst][1]).sort(byDate);
+  if(!items.length){v.append(h('div',{class:'panel empty',style:'margin-top:20px'},ic('cal'),h('b',{text:ui.lst==='need'?'All caught up':'No meetings here'}),ui.lst==='need'?'Every past meeting has been marked.':'Try another tab or clear the filters.'));return;}
+  const G=new Map();items.forEach(m=>{const k=eff(m).slice(0,7);(G.get(k)||G.set(k,[]).get(k)).push(m);});
+  for(const[k,ms]of G)v.append(h('section',{class:'month'},h('div',{class:'month-h'},h('h2',{text:fmt(parse(k+'-01'),{month:'long',year:'numeric'})}),h('span',{text:plural(ms.length,'meeting')})),h('div',{class:'rows'},ms.map(row))));
+}
+function renderMonth(v){
+  const B=base();const[y,mo]=ui.month.split('-').map(Number);const first=new Date(y,mo-1,1);
+  const shift=n=>{ui.month=iso(new Date(y,mo-1+n,1)).slice(0,7);ui.day=null;render();};
+  const byDay={};B.forEach(m=>{(byDay[eff(m)]??=[]).push(m);});
+  const g=h('div',{class:'grid'},['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>h('div',{class:'dow',text:d})));
+  const lead=(first.getDay()+6)%7,start=new Date(y,mo-1,1-lead),days=Math.ceil((lead+new Date(y,mo,0).getDate())/7)*7;
+  for(let i=0;i<days;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),ds=iso(d);
+    if(d.getMonth()!==mo-1){g.append(h('div',{class:'cell out','aria-hidden':'true'},h('span',{class:'n',text:d.getDate()})));continue;}
+    const ms=(byDay[ds]||[]).sort(byDate);
+    const c=h('button',{type:'button',class:'cell'+(ds===TODAY_ISO?' today':'')+(ui.day===ds?' sel':''),'aria-label':`${fmt(d,{weekday:'long',day:'numeric',month:'long'})}, ${plural(ms.length,'meeting')}`,onclick:()=>{ui.day=ui.day===ds?null:ds;render();}},h('span',{class:'n',text:d.getDate()}));
+    ms.slice(0,3).forEach(m=>c.append(h('div',{class:'ev s-'+track(m).status+(derived(m)==='need'?' need':''),'data-dept':m.dept,text:m.level})));
+    if(ms.length>3)c.append(h('div',{class:'more',text:`+${ms.length-3} more`}));
+    if(ms.length)c.append(h('div',{class:'dots'},ms.map(m=>h('i',{'data-dept':m.dept}))));g.append(c);}
+  v.append(h('section',{class:'panel cal'},h('div',{class:'cal-nav'},h('h2',{text:fmt(first,{month:'long',year:'numeric'})}),
+    h('button',{type:'button',class:'btn sm',text:'Today',onclick:()=>{ui.month=TODAY_ISO.slice(0,7);ui.day=TODAY_ISO;render();}}),
+    h('button',{type:'button',class:'icon-btn','aria-label':'Previous month',html:I.l,disabled:ui.month<=MONTHS[0]?true:null,onclick:()=>shift(-1)}),
+    h('button',{type:'button',class:'icon-btn','aria-label':'Next month',html:I.r,disabled:ui.month>=MONTHS[11]?true:null,onclick:()=>shift(1)})),
+    h('div',{style:'overflow-x:auto'},g),h('div',{class:'legend',style:'margin-top:14px;font-size:12.5px'},DEPTS.map(d=>h('span',{'data-dept':d},h('i',{style:'background:var(--dc)'}),d)))));
+  const sel=ui.day&&ui.day.startsWith(ui.month)?ui.day:null;const list=(sel?(byDay[sel]||[]):B.filter(m=>eff(m).startsWith(ui.month))).sort(byDate);
+  v.append(h('h3',{class:'day-h',text:sel?fmt(parse(sel),{weekday:'long',day:'numeric',month:'long'}):`All meetings in ${fmt(first,{month:'long'})}`}),
+    list.length?h('div',{class:'rows'},list.map(row)):h('div',{class:'panel empty'},h('b',{text:'No meetings on this day'}),'Pick another day, or click it again to see the whole month.'));
+}
+
+/* ---------- actions board ---------- */
+function renderActions(v){
+  const B=base();const all=B.flatMap(m=>track(m).actions.map(a=>({m,a})));
+  const owners=[...new Set(all.map(x=>x.a.owner).filter(Boolean))].sort();
+  const ow=h('select',{class:'select','aria-label':'Owner',onchange:e=>{ui.owner=e.target.value;render();}},[h('option',{value:'',text:'Everyone'}),...owners.map(o=>{const op=h('option',{value:o,text:o});if(o===ui.owner)op.selected=true;return op;})]);
+  const od=all.filter(x=>overdue(x.a)).length;
+  v.append(h('div',{class:'list-head'},h('label',{style:'display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px'},'Owner',ow),
+    od?h('span',{class:'pill p-need',html:I.alert+plural(od,'overdue action')}):null));
+  if(!all.length){v.append(h('div',{class:'panel empty',style:'margin-top:20px'},ic('task'),h('b',{text:'No action items yet'}),'Open any meeting and use its Action items tab to record what was agreed, who owns it and when it is due.',h('div',{style:'margin-top:14px'},h('button',{type:'button',class:'btn primary',text:'Go to meetings',onclick:()=>go('list')}))));return;}
+  const items=all.filter(x=>!ui.owner||x.a.owner===ui.owner);
+  const sortA=(p,q)=>(p.a.due||'9999').localeCompare(q.a.due||'9999')||eff(p.m).localeCompare(eff(q.m));
+  const cols=[['Open','var(--fg)','Not started'],['In progress','var(--moved)','In progress'],['Done','var(--done)','Done']];
+  v.append(h('div',{class:'board'},cols.map(([s,c,l])=>{const xs=items.filter(x=>x.a.status===s).sort(s==='Done'?(p,q)=>(q.a.doneOn||'').localeCompare(p.a.doneOn||''):sortA);
+    return h('section',{class:'col','aria-label':l},h('div',{class:'col-h'},h('i',{style:`--c:${c}`}),h('h3',{text:l}),h('span',{text:xs.length})),
+      xs.length?xs.map(actCard):h('div',{class:'col-empty',text:s==='Done'?'Finished actions land here.':'Nothing here.'}));})));
+}
+function setAct(m,id,patch){setTrack(m,{actions:track(m).actions.map(a=>a.id===id?{...a,...patch}:a)});}
+function moveAct(m,a,s){setAct(m,a.id,{status:s,doneOn:s==='Done'?TODAY_ISO:''});toast(s==='Done'?'Action done':s==='In progress'?'Action started':'Action reopened');render();if(ui.drawer)renderDrawer();}
+function actCard(x){const{m,a}=x;
+  const mv=a.status==='Open'?[h('button',{type:'button',class:'btn sm',html:I.play+'Start',onclick:()=>moveAct(m,a,'In progress')}),h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:()=>moveAct(m,a,'Done')})]
+    :a.status==='In progress'?[h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:()=>moveAct(m,a,'Done')})]
+    :[h('button',{type:'button',class:'btn sm ghost',html:I.undo+'Reopen',onclick:()=>moveAct(m,a,'Open')})];
+  return h('article',{class:'acard'+(overdue(a)?' late':'')+(a.status==='Done'?' done':''),'data-dept':m.dept},
+    h('div',{class:'tx',text:a.text}),
+    h('button',{type:'button',class:'mt',onclick:()=>openDrawer(m.id,'actions')},h('i',{class:'dot'}),`${m.dept} · ${m.level} · ${short(eff(m))}`),
+    h('div',{class:'ft'},h('span',{class:'ow'},a.owner?av(a.owner):null,h('span',{text:a.owner||'No owner'})),a.status==='Done'?(a.doneOn?h('span',{class:'duechip',text:'Done '+short(a.doneOn)}):null):dueChip(a)),
+    h('div',{class:'mv'},mv));}
+
+/* ---------- drawer ---------- */
+let lastFocus=null;
+function openDrawer(id,tab){lastFocus=document.activeElement;ui.drawer=id;ui.tab=tab||'notes';const d=document.getElementById('drawer'),s=document.getElementById('scrim');
+  d.hidden=false;s.hidden=false;renderDrawer();requestAnimationFrame(()=>{d.classList.add('on');s.classList.add('on');});
+  document.body.style.overflow='hidden';setTimeout(()=>d.querySelector('.x')?.focus(),30);markSel();}
+function closeDrawer(){const d=document.getElementById('drawer'),s=document.getElementById('scrim');if(!ui.drawer)return;
+  d.querySelectorAll('textarea').forEach(t=>t.dispatchEvent(new Event('blur')));
+  ui.drawer=null;d.classList.remove('on');s.classList.remove('on');document.body.style.overflow='';
+  setTimeout(()=>{d.hidden=true;s.hidden=true;},260);render();if(lastFocus&&document.contains(lastFocus))lastFocus.focus();}
+function markSel(){document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));if(ui.drawer)document.getElementById('r-'+ui.drawer)?.classList.add('sel');}
+function softRefresh(){renderShell();const v=document.getElementById('view');const y=scrollY;v.replaceChildren();VIEW_FN[ui.view](v);scrollTo({top:y});markSel();refreshPeople();}
+function bindText(el,m,field){let tm;el.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(()=>setTrack(m,{[field]:el.value}),400);});
+  el.addEventListener('blur',()=>{clearTimeout(tm);if((track(m)[field]||'')!==el.value){setTrack(m,{[field]:el.value});softRefresh();}});return el;}
+function whereBlock(m,t){
+  const save=(patch,msg)=>{setTrack(m,patch);if(msg)toast(msg);renderDrawer();softRefresh();};
+  const modeBtn=(k,i)=>h('button',{type:'button','aria-pressed':String(t.mode===k),html:I[i]+k,onclick:()=>save({mode:t.mode===k?'':k},t.mode===k?'Meeting type cleared':'Set to '+k.toLowerCase())});
+  const loc=h('input',{class:'inp',id:'dr-loc',list:'places',value:t.location,placeholder:t.mode==='Online'?'Platform, e.g. Zoom or Teams':'Venue or address, e.g. BAPS Mandir Rouse Hill','aria-label':t.mode==='Online'?'Platform':'Location',
+    onchange:e=>save({location:e.target.value.trim()},'Location saved')});
+  const link=t.mode==='Online'?h('input',{class:'inp',id:'dr-link',type:'url',value:t.link,placeholder:'Meeting link, e.g. https://zoom.us/j/…','aria-label':'Meeting link',onchange:e=>save({link:e.target.value.trim()},'Meeting link saved')}):null;
+  const open=/^https?:\/\//i.test(t.link||'')&&t.mode==='Online'?h('a',{class:'btn sm',href:t.link,target:'_blank',rel:'noopener',html:I.ext+'Join'}):
+    (t.mode!=='Online'&&t.location?h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(t.location),target:'_blank',rel:'noopener',html:I.pin+'Map'}):null);
+  const later=M.filter(x=>x.dept===m.dept&&x.level===m.level&&x.id!==m.id&&eff(x)>=TODAY_ISO&&track(x).status!=='Cancelled');
+  const copyAll=(t.mode||t.location)&&later.length?h('button',{type:'button',class:'btn sm ghost',text:`Use for all ${later.length} upcoming ${m.level} meetings`,
+    onclick:()=>{later.forEach(x=>setTrack(x,{mode:t.mode,location:t.location,link:t.link}));toast(`Applied to ${plural(later.length,'meeting')}`);softRefresh();}}):null;
+  return h('div',{class:'where-box'},
+    h('div',{class:'where-row'},h('span',{class:'where-lab',text:'Where'}),h('div',{class:'tri wide',role:'group','aria-label':'Meeting type'},modeBtn('In person','pin'),modeBtn('Online','video'))),
+    h('div',{class:'where-row'},loc,link,open),copyAll);
+}
+function renderDrawer(focusId){
+  const m=BYID[ui.drawer];if(!m)return;const t=track(m),d=document.getElementById('drawer');d.setAttribute('data-dept',m.dept);
+  const pr=t.attendees.filter(a=>a.att==='Present').length,dn=t.actions.filter(a=>a.status==='Done').length,od=t.actions.filter(overdue).length;
+  const after=()=>{renderDrawer();softRefresh();};
+  const stBtn=(s,lab)=>h('button',{type:'button',class:'st-btn','data-s':s,'aria-pressed':String(t.status===s),html:(s==='Completed'?I.check:'')+lab,
+    onclick:()=>{const p={status:s};if(s==='Completed'&&!t.completedOn)p.completedOn=eff(m)<=TODAY_ISO?eff(m):TODAY_ISO;if(s!=='Postponed')p.postponedTo='';setTrack(m,p);
+      toast(s==='Postponed'?'Rescheduled. Choose the new date':'Marked '+SL[s].toLowerCase());after();if(s==='Postponed')setTimeout(()=>document.getElementById('dr-pt')?.focus(),20);}});
+  let extra=null;
+  if(t.status==='Postponed')extra=h('div',{class:'st-extra'},h('label',{for:'dr-pt',text:'New date'}),h('input',{type:'date',id:'dr-pt',value:t.postponedTo,onchange:e=>{setTrack(m,{postponedTo:e.target.value});toast(e.target.value?'Rescheduled to '+short(e.target.value):'New date cleared');after();}}),
+    h('span',{style:'color:var(--muted)',text:'Originally '+short(m.date)}));
+  else if(t.status==='Completed')extra=h('div',{class:'st-extra'},h('label',{for:'dr-co',text:'Completed on'}),h('input',{type:'date',id:'dr-co',value:t.completedOn,onchange:e=>{setTrack(m,{completedOn:e.target.value});after();}}));
+  const tabs=[['notes','Agenda & notes',null],['people','Attendees',t.attendees.length?h('span',{class:'n',text:pr}):null],['actions','Action items',t.actions.length?h('span',{class:'n'+(od?' late':''),text:`${dn}/${t.actions.length}`}):null]];
+  const head=h('div',{class:'dr-head'},
+    h('div',{class:'dr-top'},h('div',{},h('span',{class:'dr-dept'},h('i',{class:'dot'}),m.dept),h('h2',{id:'dr-title',text:m.level}),
+      h('div',{class:'dr-when'},h('span',{text:long(eff(m))}),h('span',{text:m.freq}),m.swami==='Yes'?h('span',{class:'swami',text:'Swami required'}):m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
+      h('button',{type:'button',class:'icon-btn x','aria-label':'Close',html:I.x,onclick:closeDrawer})),
+    h('div',{class:'status-row',role:'group','aria-label':'Meeting status'},stBtn('Scheduled','Scheduled'),stBtn('Completed','Completed'),stBtn('Postponed','Rescheduled'),stBtn('Cancelled','Cancelled')),extra,whereBlock(m,t),
+    h('div',{class:'dr-tabs',role:'tablist'},tabs.map(([k,l,n])=>h('button',{type:'button',role:'tab','aria-selected':String(ui.tab===k),onclick:()=>{ui.tab=k;renderDrawer();}},l,n))));
+  const body=h('div',{class:'dr-body',role:'tabpanel'});
+  if(ui.tab==='notes'){
+    body.append(h('div',{class:'fld'},h('label',{for:'dr-ag'},'Agenda',h('small',{text:'what will be discussed'})),bindText(h('textarea',{id:'dr-ag',rows:'6',placeholder:'1. Opening prayer\n2. Actions from last meeting\n3. …',value:t.agenda}),m,'agenda')),
+      h('div',{class:'fld'},h('label',{for:'dr-nt'},'Meeting notes',h('small',{text:'discussion and decisions'})),bindText(h('textarea',{id:'dr-nt',rows:'8',placeholder:'Key points, decisions made, anything to follow up',value:t.notes}),m,'notes')));
+  }else if(ui.tab==='people'){
+    const atts=t.attendees,setA=(list,f)=>{setTrack(m,{attendees:list});renderDrawer(f);softRefresh();};
+    const add=()=>{const inp=document.getElementById('dr-nat');const names=inp.value.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);if(!names.length){inp.focus();return;}
+      const have=new Set(atts.map(a=>a.name.toLowerCase()));const nw=names.filter(n=>!have.has(n.toLowerCase())).map(n=>({id:uid(),name:n,att:'Present'}));
+      setA([...atts,...nw],'dr-nat');toast(nw.length?`Added ${plural(nw.length,'person','people')}`:'Already on the list');};
+    const prev=M.filter(x=>x.dept===m.dept&&x.level===m.level&&eff(x)<eff(m)&&track(x).attendees.length).sort(byDate).pop();
+    const c=k=>atts.filter(a=>a.att===k).length;
+    body.append(h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-nat',list:'people',placeholder:'Type a name, or several separated by commas','aria-label':'Add attendee',onkeydown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}}),
+      h('button',{type:'button',class:'btn primary',html:I.plus+'Add',onclick:add})),
+      prev&&!atts.length?h('button',{type:'button',class:'btn',style:'align-self:flex-start',html:I.copy+`Copy the list from ${short(eff(prev))}`,onclick:()=>{setA(track(prev).attendees.map(a=>({id:uid(),name:a.name,att:'Present'})),'dr-nat');toast('List copied. Change anyone who sent apologies');}}):null);
+    if(atts.length){body.append(h('div',{class:'counts'},h('span',{class:'pill p-Completed',text:`${c('Present')} present`}),h('span',{class:'pill p-Postponed',text:`${c('Apology')} ${c('Apology')===1?'apology':'apologies'}`}),h('span',{class:'pill p-need',text:`${c('Absent')} absent`})),
+      h('ul',{class:'att-list'},atts.map((a,i)=>h('li',{class:a.att},av(a.name),h('span',{class:'nm',text:a.name}),
+        h('span',{class:'tri',role:'group','aria-label':'Attendance for '+a.name},['Present','Apology','Absent'].map(s=>h('button',{type:'button','data-s':s,'aria-pressed':String(a.att===s),text:s,onclick:()=>setA(atts.map((x,j)=>j===i?{...x,att:s}:x))}))),
+        h('button',{type:'button',class:'icon-btn danger','aria-label':'Remove '+a.name,html:I.x,onclick:()=>setA(atts.filter((_,j)=>j!==i))})))),
+      h('p',{class:'hint',text:'Everyone you add starts as present. Change anyone who sent apologies or was absent.'}));}
+    else body.append(h('p',{class:'hint',text:'Names you have used before are suggested as you type.'}));
+  }else{
+    const acts=t.actions,setL=(list,f)=>{setTrack(m,{actions:list});renderDrawer(f);softRefresh();};
+    const add=()=>{const tx=document.getElementById('dr-na'),ow=document.getElementById('dr-nao'),du=document.getElementById('dr-nad');if(!tx.value.trim()){tx.focus();return;}
+      setL([...acts,{id:uid(),text:tx.value.trim(),owner:ow.value.trim(),due:du.value,status:'Open',created:TODAY_ISO}],'dr-na');toast('Action added');};
+    const ent=e=>{if(e.key==='Enter'){e.preventDefault();add();}};
+    body.append(h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-na',placeholder:'What needs to be done?','aria-label':'New action',onkeydown:ent}),
+      h('input',{class:'inp ow',id:'dr-nao',list:'people',placeholder:'Who','aria-label':'Owner',onkeydown:ent}),
+      h('input',{type:'date',id:'dr-nad','aria-label':'Due date'}),h('button',{type:'button',class:'btn primary',html:I.plus+'Add',onclick:add})));
+    if(acts.length)body.append(h('ul',{class:'act-list'},acts.map(a=>h('li',{class:(a.status==='Done'?'done ':'')+(overdue(a)?'late':'')},
+      h('button',{type:'button',class:'chk','aria-pressed':String(a.status==='Done'),'aria-label':a.status==='Done'?'Reopen':'Mark done',html:I.check,onclick:()=>moveAct(m,a,a.status==='Done'?'Open':'Done')}),
+      h('input',{class:'tx',value:a.text,'aria-label':'Action',onchange:e=>{setAct(m,a.id,{text:e.target.value});softRefresh();}}),
+      h('button',{type:'button',class:'icon-btn danger','aria-label':'Delete action',html:I.x,onclick:()=>{setL(acts.filter(x=>x.id!==a.id));toast('Action deleted');}}),
+      h('div',{class:'sub'},h('span',{class:'tri',role:'group','aria-label':'Progress'},ACT_ST.map(s=>h('button',{type:'button','data-s':s,'aria-pressed':String(a.status===s),text:s,onclick:()=>moveAct(m,a,s)}))),
+        h('input',{class:'inp',list:'people',value:a.owner,placeholder:'Owner','aria-label':'Owner',onchange:e=>{setAct(m,a.id,{owner:e.target.value});softRefresh();}}),
+        h('input',{type:'date',value:a.due,'aria-label':'Due date',onchange:e=>{setAct(m,a.id,{due:e.target.value});renderDrawer();softRefresh();}}))))));
+    else body.append(h('p',{class:'hint',text:'Add each thing agreed in the meeting, who will do it and by when. Track progress here or on the Action items board.'}));
+  }
+  if(t.updated)body.append(h('div',{class:'dr-upd',text:'Last changed'+(t.updatedBy?' by '+(t.updatedBy===myName?'you':t.updatedBy):'')+' · '+fmt(new Date(t.updated),{day:'numeric',month:'short'})+', '+new Date(t.updated).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}));
+  const foot=h('div',{class:'dr-foot'},h('span',{class:'lab',text:'Add to calendar'}),
+    h('a',{class:'btn sm',href:gLink(m),target:'_blank',rel:'noopener',text:'Google'}),h('a',{class:'btn sm',href:oLink(m),target:'_blank',rel:'noopener',text:'Outlook'}),
+    h('button',{type:'button',class:'btn sm',text:'.ics',onclick:()=>dlIcs([m],fileSafe(m.dept+'_'+m.level+'_'+eff(m))+'.ics',title(m))}),h('span',{class:'sp'}),
+    h('button',{type:'button',class:'btn sm',html:I.copy+'Copy minutes',onclick:()=>copyMinutes(m)}));
+  d.replaceChildren(head,body,foot);
+  if(focusId)setTimeout(()=>document.getElementById(focusId)?.focus(),0);
+}
+
+/* ---------- calendar links, files ---------- */
+function details(m){const t=track(m);let s=`Seva level: ${m.level}\nFrequency: ${m.freq}\nSwami's presence required: ${m.swami}`;if(t.mode)s+=`\nMeeting type: ${t.mode}`;if(t.link)s+=`\nJoin: ${t.link}`;
+  if(t.status==='Postponed'&&t.postponedTo)s+=`\nRescheduled from ${short(m.date)}`;if(t.agenda)s+=`\n\nAgenda:\n${t.agenda}`;return s;}
+function calLoc(m){const t=track(m);return t.mode==='Online'?(t.link||t.location||'Online'):(t.location||'');}
+function gLink(m){const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title(m))+'&dates='+ymd(d)+'/'+ymd(e)+'&details='+encodeURIComponent(details(m))+'&location='+encodeURIComponent(calLoc(m))+'&ctz=Australia/Sydney';}
+function oLink(m){const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return'https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&allday=true&subject='+encodeURIComponent(title(m))+'&startdt='+iso(d)+'&enddt='+iso(e)+'&location='+encodeURIComponent(calLoc(m))+'&body='+encodeURIComponent(details(m).replace(/\n/g,'<br>'));}
+function minutes(m){const t=track(m),L=[];const by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join(', ')||'—';
+  L.push(title(m).toUpperCase(),long(eff(m))+'  ·  '+SL[t.status],'Where: '+(whereText(t)||'—')+(t.mode==='Online'&&t.link?'  ('+t.link+')':''),'','ATTENDANCE','Present: '+by('Present'),'Apologies: '+by('Apology'),'Absent: '+by('Absent'),'','AGENDA',t.agenda.trim()||'—','','NOTES',t.notes.trim()||'—','','ACTION ITEMS');
+  if(!t.actions.length)L.push('—');t.actions.forEach((a,i)=>L.push(`${i+1}. ${a.text}  |  Owner: ${a.owner||'—'}  |  Due: ${a.due?short(a.due):'—'}  |  ${a.status}`));return L.join('\n');}
+function copyMinutes(m){const txt=minutes(m);const fb=()=>{download(txt,fileSafe('Minutes_'+m.dept+'_'+m.level+'_'+eff(m))+'.txt','text/plain');toast('Minutes saved as a text file');};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Minutes copied. Paste them into an email'),fb);}catch(e){fb();}}
+function fileSafe(s){return s.replace(/[^A-Za-z0-9_-]+/g,'_');}
+function download(content,name,type){const b=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
+function icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\r?\n/g,'\\n');}
+function fold(l){const o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73);}o.push(l);return o.join('\r\n');}
+function dlIcs(items,name,cal){const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BAPS Australia//Meeting Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+icsEsc(cal),'X-WR-TIMEZONE:Australia/Sydney'];
+  items.forEach(m=>{const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),t=track(m);
+    L.push('BEGIN:VEVENT','UID:'+m.id+'@meetings.au.baps.org','DTSTAMP:'+st,'SEQUENCE:'+Math.floor(Date.now()/60000%100000),'DTSTART;VALUE=DATE:'+ymd(d),'DTEND;VALUE=DATE:'+ymd(e),'SUMMARY:'+icsEsc(title(m)),...(calLoc(m)?['LOCATION:'+icsEsc(calLoc(m))]:[]),...(/^https?:/i.test(t.link||'')?['URL:'+t.link]:[]),
+      'DESCRIPTION:'+icsEsc('Department: '+m.dept+'\n'+details(m)),'CATEGORIES:'+icsEsc(m.dept),'STATUS:'+(t.status==='Cancelled'?'CANCELLED':'CONFIRMED'),'TRANSP:TRANSPARENT',
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title(m)+' tomorrow'),'TRIGGER:-PT15H','END:VALARM','END:VEVENT');});
+  L.push('END:VCALENDAR');download(L.map(fold).join('\r\n')+'\r\n',name,'text/calendar');toast(items.length===1?'Calendar file downloaded':`Calendar file with ${items.length} meetings downloaded`);}
+const cell=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+const csv=(rows,name,msg)=>{download('\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n'),name,'text/csv');toast(msg);};
+const sorted=()=>M.slice().sort((a,b)=>a.date.localeCompare(b.date));
+function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
+  sorted().forEach(m=>{const t=track(m),by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join('; ');
+    rows.push([m.date,eff(m),m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,t.completedOn,derived(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
+  csv(rows,'BAPS_Meeting_Register_'+TODAY_ISO+'.csv','Meeting register downloaded');}
+function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Progress','Overdue?','Done On','Added On']];
+  sorted().forEach(m=>track(m).actions.forEach(a=>rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status,overdue(a)?'Yes':'',a.doneOn||'',a.created||''])));
+  if(rows.length===1){toast('No action items recorded yet');return;}csv(rows,'BAPS_Action_Items_'+TODAY_ISO+'.csv','Action items downloaded');}
+function dlAttend(){const rows=[['Meeting Date','Department','Seva Level','Name','Attendance']];sorted().forEach(m=>track(m).attendees.forEach(a=>rows.push([eff(m),m.dept,m.level,a.name,a.att])));
+  if(rows.length===1){toast('No attendance recorded yet');return;}csv(rows,'BAPS_Attendance_'+TODAY_ISO+'.csv','Attendance downloaded');}
+
+/* ---------- popover menus ---------- */
+const POPS={
+  dl:()=>[h('div',{class:'ph',text:'Calendar files'}),
+    item('ics','All meetings','Import the whole year into your calendar',()=>dlIcs(M.filter(m=>track(m).status!=='Cancelled'),'BAPS_Meetings_Oct2026-Sep2027.ics','BAPS Meetings')),
+    item('ics',ui.dept?`${ui.dept} meetings`:'Meetings matching filters','Only what your current filters show',()=>{const x=base().filter(m=>track(m).status!=='Cancelled');if(!x.length){toast('No meetings match the filters');return;}dlIcs(x,'BAPS_Meetings_'+fileSafe(ui.dept||'Filtered')+'.ics','BAPS Meetings'+(ui.dept?' – '+ui.dept:''));}),
+    h('hr'),h('div',{class:'ph',text:'Excel reports'}),
+    item('sheet','Meeting register','Status, agenda, notes and attendance',dlRegister),item('sheet','Action items','Owner, due date and progress',dlActions),item('sheet','Attendance','One row per person per meeting',dlAttend)],
+  bk:()=>[item('down','Export progress','Save everything you have entered to a file',()=>{download(JSON.stringify({app:'baps-meeting-tracker',version:3,exported:new Date().toISOString(),records:store},null,2),'BAPS_Meeting_Progress_'+TODAY_ISO+'.json','application/json');toast('Progress exported');}),
+    item('up','Import progress','Load a file you exported earlier',()=>imp.click())]};
+function item(i,l,s,fn){return h('button',{type:'button',role:'menuitem',onclick:()=>{closePop();fn();}},ic(i),h('span',{text:l}),h('small',{text:s}));}
+function openPop(kind,btn){const p=document.getElementById('pop');if(!p.hidden&&p.dataset.kind===kind){closePop();return;}p.dataset.kind=kind;p.replaceChildren(...POPS[kind]());p.hidden=false;
+  const r=btn.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;let x=r.left,y=r.bottom+6;
+  if(r.left<240&&innerWidth>900){x=r.right+8;y=Math.min(r.top,innerHeight-ph-12);}
+  x=Math.max(8,Math.min(x,innerWidth-pw-8));if(y+ph>innerHeight-8)y=Math.max(8,r.top-ph-6);p.style.left=x+'px';p.style.top=y+'px';p.querySelector('button')?.focus();}
+function closePop(){document.getElementById('pop').hidden=true;}
+const imp=h('input',{type:'file',accept:'.json,application/json',hidden:true});document.body.append(imp);
+imp.addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result),recs=j.records||j;let n=0;
+    for(const[k,v]of Object.entries(recs)){if(BYID[k]&&v&&STATUSES.includes(v.status)){const cur=store[k];if(!cur||!cur.updated||(v.updated||'')>=cur.updated){const rec={...DEF(),...v,attendees:Array.isArray(v.attendees)?v.attendees:[],actions:Array.isArray(v.actions)?v.actions:[]};store[k]=rec;persist(k,rec);n++;}}}
+    if(!CONFIGURED)persist();render();toast(n?`Imported ${plural(n,'meeting')}`:'Nothing new in that file');}catch(err){toast('Choose the .json file made by Export progress');}imp.value='';};r.readAsText(f);});
+
+/* ---------- render ---------- */
+const VIEW_FN={dash:renderDash,list:renderList,month:renderMonth,actions:renderActions};
+function render(){renderShell();refreshPeople();hideTip();const v=document.getElementById('view');v.replaceChildren();VIEW_FN[ui.view](v);markSel();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pop]');if(b){e.stopPropagation();openPop(b.dataset.pop,b);return;}if(!e.target.closest('#pop'))closePop();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('pop').hidden)closePop();else if(ui.drawer)closeDrawer();hideTip();}});
+document.getElementById('scrim').addEventListener('click',closeDrawer);
+let qt;document.getElementById('q').addEventListener('input',e=>{clearTimeout(qt);qt=setTimeout(()=>{ui.q=e.target.value.trim();if(ui.q&&ui.view==='dash')ui.view='list',ui.lst='all';render();},180);});
+addEventListener('scroll',()=>{hideTip();},{passive:true});
+addEventListener('resize',()=>{closePop();hideTip();});
+function liveRefresh(){clearTimeout(liveRefresh._t);liveRefresh._t=setTimeout(()=>{
+  if(ui.drawer){const a=document.activeElement;const typing=a&&document.getElementById('drawer').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!typing)renderDrawer();}
+  softRefresh();},150);}
+async function loadAll(){const all={};let from=0;
+  for(;;){const r=await SB.from('meetings').select('id,data').range(from,from+999);if(r.error)throw r.error;r.data.forEach(x=>all[x.id]=x.data);if(r.data.length<1000)break;from+=1000;}
+  return all;}
+async function boot(){
+  const who=document.getElementById('who');if(myName)document.getElementById('who-name').textContent='Editing as '+myName;
+  who.addEventListener('click',()=>{askName();if(ui.drawer)renderDrawer();});
+  if(!CONFIGURED){who.hidden=true;setSync('local');return;}
+  setSync('connecting');
+  SB=window.supabase.createClient(SB_URL,SB_KEY);
+  const connect=async()=>{try{store=await loadAll();LIVE=true;setSync(pending?'saving':'live');render();if(ui.drawer)renderDrawer();}catch(e){console.error(e);setSync('err');toast('Could not reach the shared data. Check your connection; retrying…',true);setTimeout(connect,5000);}};
+  await connect();
+  SB.channel('meetings-live').on('postgres_changes',{event:'*',schema:'public',table:'meetings'},p=>{
+    if(p.eventType==='DELETE'){delete store[p.old.id];}else if(p.new&&p.new.id){store[p.new.id]=p.new.data;}liveRefresh();})
+    .subscribe(s=>{if(s==='CHANNEL_ERROR'||s==='TIMED_OUT')setSync('err');else if(s==='SUBSCRIBED'&&LIVE)setSync(pending?'saving':'live');});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&LIVE&&!pending)loadAll().then(s=>{store=s;liveRefresh();}).catch(()=>{});});
+}
+render();boot();
+</script>
+</body>
+</html>
