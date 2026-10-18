@@ -365,7 +365,10 @@ details.tbl[open] summary{margin-bottom:10px}
 .where-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
 .where-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .where-row .inp{flex:1 1 220px;height:36px}
-.where-lab{font-size:13.5px;font-weight:700;margin-right:4px}
+.where-lab{font-size:13.5px;font-weight:700;margin-right:4px;width:46px}
+.where-row input[type=time]{height:36px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:0 10px}
+.where-row input[type=time]:disabled{opacity:.5}
+.muted-to{color:var(--muted);font-size:13.5px}
 .where-box .btn.ghost{align-self:flex-start;padding:0 6px;color:var(--saffron-ink)}
 .tri.wide button{display:inline-flex;gap:6px;align-items:center;height:30px;padding:0 12px}
 .tri.wide button svg{width:15px;height:15px}
@@ -588,7 +591,7 @@ function persist(id,rec){
     .catch(e=>{pending--;setSync('err');toast('Could not save that change. Check your internet connection and try again',true);console.error(e);});}
 function askName(){const n=prompt('Your name (shown to others as who made each change):',myName||'');if(n===null)return false;const v=n.trim();if(!v)return false;
   myName=v;try{localStorage.setItem('baps-meeting-tracker-name',v);}catch(e){}const el=document.getElementById('who-name');if(el)el.textContent='Editing as '+v;return true;}
-const DEF=()=>({status:'Scheduled',postponedTo:'',completedOn:'',notes:'',agenda:'',attendees:[],actions:[],mode:'',location:'',link:''});
+const DEF=()=>({status:'Scheduled',postponedTo:'',completedOn:'',notes:'',agenda:'',attendees:[],actions:[],mode:'',location:'',link:'',start:'',end:''});
 function track(m){return {...DEF(),...(store[m.id]||m.seed||{})};}
 let blockT=0;
 function setTrack(m,patch){
@@ -626,7 +629,11 @@ function matchBase(m){const t=track(m);
 const LST={open:['Upcoming',m=>{const d=derived(m);return(d==='Scheduled'||d==='Postponed')&&eff(m)>=TODAY_ISO;}],need:['Needs update',m=>derived(m)==='need'],
   Completed:['Completed',m=>track(m).status==='Completed'],Postponed:['Rescheduled',m=>track(m).status==='Postponed'],Cancelled:['Cancelled',m=>track(m).status==='Cancelled'],all:['All',()=>true]};
 const base=()=>M.filter(matchBase);
-const byDate=(a,b)=>eff(a).localeCompare(eff(b))||a.dept.localeCompare(b.dept);
+const byDate=(a,b)=>eff(a).localeCompare(eff(b))||(track(a).start||'99').localeCompare(track(b).start||'99')||a.dept.localeCompare(b.dept);
+function fmtT(s){if(!s)return'';const[H,Mi]=s.split(':').map(Number);const ap=H>=12?'pm':'am';const h12=H%12||12;return h12+(Mi?':'+String(Mi).padStart(2,'0'):'')+' '+ap;}
+function timeText(t){return t.start?fmtT(t.start)+(t.end?' – '+fmtT(t.end):''):'';}
+function addMin(s,n){const[H,Mi]=s.split(':').map(Number);const x=H*60+Mi+n;const y=Math.min(x,23*60+59);return String(Math.floor(y/60)).padStart(2,'0')+':'+String(y%60).padStart(2,'0');}
+function endOf(t){return t.end&&t.end>t.start?t.end:addMin(t.start,60);}
 
 /* ---------- shell ---------- */
 const VIEWS=[['dash','Dashboard','dash'],['list','Meetings','list'],['month','Calendar','cal'],['actions','Action items','task']];
@@ -665,7 +672,7 @@ function renderDash(v){
   const nx=up.slice(0,3).map(m=>{const d=parse(eff(m));const isT=eff(m)===TODAY_ISO;const days=Math.round((d-TODAY)/864e5);
     return h('button',{type:'button',class:'nx','data-dept':m.dept,onclick:()=>openDrawer(m.id)},
       h('span',{class:'d'},h('small',{text:fmt(d,{month:'short'})}),h('b',{text:d.getDate()})),
-      h('span',{class:'t'},h('b',{text:m.level}),h('span',{text:`${m.dept} · ${fmt(d,{weekday:'long'})}`})),
+      h('span',{class:'t'},h('b',{text:m.level}),h('span',{text:`${m.dept} · ${fmt(d,{weekday:'long'})}`+(track(m).start?' · '+fmtT(track(m).start):'')})),
       h('span',{class:'tg'+(isT?'':' soft'),text:isT?'Today':days===1?'Tomorrow':`In ${days} days`}));});
   v.append(h('section',{class:'hero'},
     h('div',{},h('div',{class:'hi',text:'Jai Swaminarayan'}),h('h2',{text:head}),h('div',{class:'when',text:fmt(TODAY,{weekday:'long',day:'numeric',month:'long'})+(ui.dept?` · ${ui.dept} only`:'')}),
@@ -763,7 +770,7 @@ function row(m){const t=track(m),d=parse(eff(m));
       onclick:()=>openDrawer(m.id),onkeydown:e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openDrawer(m.id);}}},
     h('div',{class:'dbox'},h('small',{text:fmt(d,{weekday:'short'})}),h('b',{text:d.getDate()})),
     h('div',{class:'r-main'},h('div',{class:'t'},m.level,m.swami==='Yes'?h('span',{class:'swami',text:'Swami'}):null),
-      h('div',{class:'s'},h('span',{class:'dp'},h('i',{class:'dot'}),m.dept),h('span',{text:m.freq}),whereChip(t),m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
+      h('div',{class:'s'},h('span',{class:'dp'},h('i',{class:'dot'}),m.dept),h('span',{text:m.freq}),t.start?h('span',{class:'where'},ic('clock'),timeText(t)):null,whereChip(t),m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
     h('div',{class:'rec'},
       h('span',{class:t.agenda.trim()||t.notes.trim()?'on':'',title:t.agenda.trim()?'Agenda recorded':'No agenda yet',html:I.doc}),
       h('span',{class:t.attendees.length?'on':'',title:'Attendees present'},ic('ppl'),t.attendees.length?String(pr):''),
@@ -795,7 +802,7 @@ function renderMonth(v){
     if(d.getMonth()!==mo-1){g.append(h('div',{class:'cell out','aria-hidden':'true'},h('span',{class:'n',text:d.getDate()})));continue;}
     const ms=(byDay[ds]||[]).sort(byDate);
     const c=h('button',{type:'button',class:'cell'+(ds===TODAY_ISO?' today':'')+(ui.day===ds?' sel':''),'aria-label':`${fmt(d,{weekday:'long',day:'numeric',month:'long'})}, ${plural(ms.length,'meeting')}`,onclick:()=>{ui.day=ui.day===ds?null:ds;render();}},h('span',{class:'n',text:d.getDate()}));
-    ms.slice(0,3).forEach(m=>c.append(h('div',{class:'ev s-'+track(m).status+(derived(m)==='need'?' need':''),'data-dept':m.dept,text:m.level})));
+    ms.slice(0,3).forEach(m=>c.append(h('div',{class:'ev s-'+track(m).status+(derived(m)==='need'?' need':''),'data-dept':m.dept,text:(track(m).start?fmtT(track(m).start).replace(' ','')+' ':'')+m.level})));
     if(ms.length>3)c.append(h('div',{class:'more',text:`+${ms.length-3} more`}));
     if(ms.length)c.append(h('div',{class:'dots'},ms.map(m=>h('i',{'data-dept':m.dept}))));g.append(c);}
   v.append(h('section',{class:'panel cal'},h('div',{class:'cal-nav'},h('h2',{text:fmt(first,{month:'long',year:'numeric'})}),
@@ -858,9 +865,14 @@ function whereBlock(m,t){
   const open=/^https?:\/\//i.test(t.link||'')&&t.mode==='Online'?h('a',{class:'btn sm',href:t.link,target:'_blank',rel:'noopener',html:I.ext+'Join'}):
     (t.mode!=='Online'&&t.location?h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(t.location),target:'_blank',rel:'noopener',html:I.pin+'Map'}):null);
   const later=M.filter(x=>x.dept===m.dept&&x.level===m.level&&x.id!==m.id&&eff(x)>=TODAY_ISO&&track(x).status!=='Cancelled');
-  const copyAll=(t.mode||t.location)&&later.length?h('button',{type:'button',class:'btn sm ghost',text:`Use for all ${later.length} upcoming ${m.level} meetings`,
-    onclick:()=>{later.forEach(x=>setTrack(x,{mode:t.mode,location:t.location,link:t.link}));toast(`Applied to ${plural(later.length,'meeting')}`);softRefresh();}}):null;
-  return h('div',{class:'where-box'},
+  const copyAll=(t.mode||t.location||t.start)&&later.length?h('button',{type:'button',class:'btn sm ghost',text:`Use this time and place for all ${later.length} upcoming ${m.level} meetings`,
+    onclick:()=>{later.forEach(x=>setTrack(x,{mode:t.mode,location:t.location,link:t.link,start:t.start,end:t.end}));toast(`Applied to ${plural(later.length,'meeting')}`);softRefresh();}}):null;
+  const timeRow=h('div',{class:'where-row'},h('span',{class:'where-lab',text:'When'}),
+    h('input',{type:'time',id:'dr-st',value:t.start,step:'300','aria-label':'Start time',onchange:e=>{const v=e.target.value;const p={start:v};if(v&&(!t.end||t.end<=v))p.end=addMin(v,60);if(!v)p.end='';save(p,v?'Start time saved':'Time cleared');}}),
+    h('span',{class:'muted-to',text:'to'}),
+    h('input',{type:'time',id:'dr-en',value:t.end,step:'300','aria-label':'End time',disabled:t.start?null:true,onchange:e=>{const v=e.target.value;if(v&&v<=t.start){toast('End time must be after the start time',true);e.target.value=t.end;return;}save({end:v},'End time saved');}}),
+    !t.start?h('span',{class:'hint',text:'No time set, so calendars show it as all day'}):null);
+  return h('div',{class:'where-box'},timeRow,
     h('div',{class:'where-row'},h('span',{class:'where-lab',text:'Where'}),h('div',{class:'tri wide',role:'group','aria-label':'Meeting type'},modeBtn('In person','pin'),modeBtn('Online','video'))),
     h('div',{class:'where-row'},loc,link,open),copyAll);
 }
@@ -878,7 +890,7 @@ function renderDrawer(focusId){
   const tabs=[['notes','Agenda & notes',null],['people','Attendees',t.attendees.length?h('span',{class:'n',text:pr}):null],['actions','Action items',t.actions.length?h('span',{class:'n'+(od?' late':''),text:`${dn}/${t.actions.length}`}):null]];
   const head=h('div',{class:'dr-head'},
     h('div',{class:'dr-top'},h('div',{},h('span',{class:'dr-dept'},h('i',{class:'dot'}),m.dept),h('h2',{id:'dr-title',text:m.level}),
-      h('div',{class:'dr-when'},h('span',{text:long(eff(m))}),h('span',{text:m.freq}),m.swami==='Yes'?h('span',{class:'swami',text:'Swami required'}):m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
+      h('div',{class:'dr-when'},h('span',{text:long(eff(m))+(t.start?' · '+timeText(t):'')}),h('span',{text:m.freq}),m.swami==='Yes'?h('span',{class:'swami',text:'Swami required'}):m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null)),
       h('button',{type:'button',class:'icon-btn x','aria-label':'Close',html:I.x,onclick:closeDrawer})),
     h('div',{class:'status-row',role:'group','aria-label':'Meeting status'},stBtn('Scheduled','Scheduled'),stBtn('Completed','Completed'),stBtn('Postponed','Rescheduled'),stBtn('Cancelled','Cancelled')),extra,whereBlock(m,t),
     h('div',{class:'dr-tabs',role:'tablist'},tabs.map(([k,l,n])=>h('button',{type:'button',role:'tab','aria-selected':String(ui.tab===k),onclick:()=>{ui.tab=k;renderDrawer();}},l,n))));
@@ -932,10 +944,11 @@ function renderDrawer(focusId){
 function details(m){const t=track(m);let s=`Seva level: ${m.level}\nFrequency: ${m.freq}\nSwami's presence required: ${m.swami}`;if(t.mode)s+=`\nMeeting type: ${t.mode}`;if(t.link)s+=`\nJoin: ${t.link}`;
   if(t.status==='Postponed'&&t.postponedTo)s+=`\nRescheduled from ${short(m.date)}`;if(t.agenda)s+=`\n\nAgenda:\n${t.agenda}`;return s;}
 function calLoc(m){const t=track(m);return t.mode==='Online'?(t.link||t.location||'Online'):(t.location||'');}
-function gLink(m){const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title(m))+'&dates='+ymd(d)+'/'+ymd(e)+'&details='+encodeURIComponent(details(m))+'&location='+encodeURIComponent(calLoc(m))+'&ctz=Australia/Sydney';}
-function oLink(m){const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return'https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&allday=true&subject='+encodeURIComponent(title(m))+'&startdt='+iso(d)+'&enddt='+iso(e)+'&location='+encodeURIComponent(calLoc(m))+'&body='+encodeURIComponent(details(m).replace(/\n/g,'<br>'));}
+function gDates(m){const t=track(m),d=parse(eff(m));if(t.start){const hm=s=>s.replace(':','')+'00';return ymd(d)+'T'+hm(t.start)+'/'+ymd(d)+'T'+hm(endOf(t));}const e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return ymd(d)+'/'+ymd(e);}
+function gLink(m){return'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title(m))+'&dates='+gDates(m)+'&details='+encodeURIComponent(details(m))+'&location='+encodeURIComponent(calLoc(m))+'&ctz=Australia/Sydney';}
+function oLink(m){const t=track(m),d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);const tm=!!t.start;return'https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&allday='+(tm?'false':'true')+'&subject='+encodeURIComponent(title(m))+'&startdt='+(tm?iso(d)+'T'+t.start+':00':iso(d))+'&enddt='+(tm?iso(d)+'T'+endOf(t)+':00':iso(e))+'&location='+encodeURIComponent(calLoc(m))+'&body='+encodeURIComponent(details(m).replace(/\n/g,'<br>'));}
 function minutes(m){const t=track(m),L=[];const by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join(', ')||'—';
-  L.push(title(m).toUpperCase(),long(eff(m))+'  ·  '+SL[t.status],'Where: '+(whereText(t)||'—')+(t.mode==='Online'&&t.link?'  ('+t.link+')':''),'','ATTENDANCE','Present: '+by('Present'),'Apologies: '+by('Apology'),'Absent: '+by('Absent'),'','AGENDA',t.agenda.trim()||'—','','NOTES',t.notes.trim()||'—','','ACTION ITEMS');
+  L.push(title(m).toUpperCase(),long(eff(m))+(t.start?'  ·  '+timeText(t):'')+'  ·  '+SL[t.status],'Where: '+(whereText(t)||'—')+(t.mode==='Online'&&t.link?'  ('+t.link+')':''),'','ATTENDANCE','Present: '+by('Present'),'Apologies: '+by('Apology'),'Absent: '+by('Absent'),'','AGENDA',t.agenda.trim()||'—','','NOTES',t.notes.trim()||'—','','ACTION ITEMS');
   if(!t.actions.length)L.push('—');t.actions.forEach((a,i)=>L.push(`${i+1}. ${a.text}  |  Owner: ${a.owner||'—'}  |  Due: ${a.due?short(a.due):'—'}  |  ${a.status}`));return L.join('\n');}
 function copyMinutes(m){const txt=minutes(m);const fb=()=>{download(txt,fileSafe('Minutes_'+m.dept+'_'+m.level+'_'+eff(m))+'.txt','text/plain');toast('Minutes saved as a text file');};
   try{navigator.clipboard.writeText(txt).then(()=>toast('Minutes copied. Paste them into an email'),fb);}catch(e){fb();}}
@@ -944,18 +957,19 @@ function download(content,name,type){const b=new Blob([content],{type});const a=
 function icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\r?\n/g,'\\n');}
 function fold(l){const o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73);}o.push(l);return o.join('\r\n');}
 function dlIcs(items,name,cal){const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
-  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BAPS Australia//Meeting Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+icsEsc(cal),'X-WR-TIMEZONE:Australia/Sydney'];
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BAPS Australia//Meeting Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+icsEsc(cal),'X-WR-TIMEZONE:Australia/Sydney',
+    'BEGIN:VTIMEZONE','TZID:Australia/Sydney','BEGIN:STANDARD','DTSTART:19700405T030000','RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=1SU','TZOFFSETFROM:+1100','TZOFFSETTO:+1000','TZNAME:AEST','END:STANDARD','BEGIN:DAYLIGHT','DTSTART:19701004T020000','RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=1SU','TZOFFSETFROM:+1000','TZOFFSETTO:+1100','TZNAME:AEDT','END:DAYLIGHT','END:VTIMEZONE'];
   items.forEach(m=>{const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),t=track(m);
-    L.push('BEGIN:VEVENT','UID:'+m.id+'@meetings.au.baps.org','DTSTAMP:'+st,'SEQUENCE:'+Math.floor(Date.now()/60000%100000),'DTSTART;VALUE=DATE:'+ymd(d),'DTEND;VALUE=DATE:'+ymd(e),'SUMMARY:'+icsEsc(title(m)),...(calLoc(m)?['LOCATION:'+icsEsc(calLoc(m))]:[]),...(/^https?:/i.test(t.link||'')?['URL:'+t.link]:[]),
-      'DESCRIPTION:'+icsEsc('Department: '+m.dept+'\n'+details(m)),'CATEGORIES:'+icsEsc(m.dept),'STATUS:'+(t.status==='Cancelled'?'CANCELLED':'CONFIRMED'),'TRANSP:TRANSPARENT',
-      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title(m)+' tomorrow'),'TRIGGER:-PT15H','END:VALARM','END:VEVENT');});
+    L.push('BEGIN:VEVENT','UID:'+m.id+'@meetings.au.baps.org','DTSTAMP:'+st,'SEQUENCE:'+Math.floor(Date.now()/60000%100000),...(t.start?['DTSTART;TZID=Australia/Sydney:'+ymd(d)+'T'+t.start.replace(':','')+'00','DTEND;TZID=Australia/Sydney:'+ymd(d)+'T'+endOf(t).replace(':','')+'00']:['DTSTART;VALUE=DATE:'+ymd(d),'DTEND;VALUE=DATE:'+ymd(e)]),'SUMMARY:'+icsEsc(title(m)),...(calLoc(m)?['LOCATION:'+icsEsc(calLoc(m))]:[]),...(/^https?:/i.test(t.link||'')?['URL:'+t.link]:[]),
+      'DESCRIPTION:'+icsEsc('Department: '+m.dept+'\n'+details(m)),'CATEGORIES:'+icsEsc(m.dept),'STATUS:'+(t.status==='Cancelled'?'CANCELLED':'CONFIRMED'),'TRANSP:'+(t.start?'OPAQUE':'TRANSPARENT'),
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title(m)+(t.start?' in 1 hour':' tomorrow')),'TRIGGER:'+(t.start?'-PT1H':'-PT15H'),'END:VALARM','END:VEVENT');});
   L.push('END:VCALENDAR');download(L.map(fold).join('\r\n')+'\r\n',name,'text/calendar');toast(items.length===1?'Calendar file downloaded':`Calendar file with ${items.length} meetings downloaded`);}
 const cell=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
 const csv=(rows,name,msg)=>{download('\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n'),name,'text/csv');toast(msg);};
 const sorted=()=>M.slice().sort((a,b)=>a.date.localeCompare(b.date));
-function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
+function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Start Time','End Time','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
   sorted().forEach(m=>{const t=track(m),by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join('; ');
-    rows.push([m.date,eff(m),m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,t.completedOn,derived(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
+    rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,t.completedOn,derived(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
   csv(rows,'BAPS_Meeting_Register_'+TODAY_ISO+'.csv','Meeting register downloaded');}
 function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Progress','Overdue?','Done On','Added On']];
   sorted().forEach(m=>track(m).actions.forEach(a=>rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status,overdue(a)?'Yes':'',a.doneOn||'',a.created||''])));
