@@ -456,6 +456,16 @@ input[type=date],.inp{height:38px;border:1px solid var(--line-2);border-radius:1
 .nw-in input[type=date]{height:38px}
 .add-btn{height:42px;border-radius:12px}
 @media (max-width:560px){.nw-row{grid-template-columns:1fr;gap:6px}.add-btn span{display:none}.add-btn{width:42px;padding:0}}
+.dr-acts{margin-left:auto;display:flex;gap:6px;align-items:flex-start;margin-top:-4px}
+.dr-top .x{margin:0}
+.btn.on{background:var(--surface-2);border-color:var(--fg)}
+.ei-box{margin-top:14px;display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2)}
+.ei-row{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:center}
+.ei-row label{font-size:13.5px;font-weight:700}
+.ei-row .inp{height:36px;width:100%}
+.ei-scope{display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding-top:4px}
+.ei-scope label{display:flex;gap:8px;align-items:center;cursor:pointer}
+@media (max-width:560px){.ei-row{grid-template-columns:1fr;gap:4px}}
 .dr-note{margin-top:12px;font-size:13px;background:var(--moved-soft);color:var(--fg);border-radius:10px;padding:8px 12px}
 .side-btn.add{background:var(--on-brand);color:var(--brand);border-color:transparent}
 .side-btn.add:hover{filter:brightness(.96)}
@@ -593,6 +603,7 @@ const I={
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/></svg>',
   ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>',
   undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2"/></svg>'
 };
 
@@ -623,12 +634,16 @@ let blockT=0;
 function setTrack(m,patch){
   if(CONFIGURED&&!LIVE){toast('Still connecting. Try again in a moment',true);blockT=Date.now();return false;}
   if(CONFIGURED&&!myName&&!askName()){toast('Add your name first so others can see who made the change',true);blockT=Date.now();return false;}
-  const rec={...track(m),...patch,updated:new Date().toISOString(),updatedBy:myName};store[m.id]=rec;persist(m.id,rec);return true;}
+  const rec={...track(m),...patch,updated:new Date().toISOString(),updatedBy:myName};store[m.id]=rec;persist(m.id,rec);if('info' in patch||'custom' in patch)rebuildM();return true;}
 const uid=()=>Math.random().toString(36).slice(2,10);
 let M=DATA.meetings.slice(), BYID=Object.fromEntries(M.map(m=>[m.id,m]));
-function rebuildM(){const extra=Object.entries(store).filter(([,r])=>r&&r.custom&&!r.custom.deleted&&r.custom.date).map(([id,r])=>({id,date:r.custom.date,dept:r.custom.dept,level:r.custom.level,freq:r.custom.freq||'One-off',swami:r.custom.swami||'No',custom:true}));
-  M=[...DATA.meetings,...extra];BYID=Object.fromEntries(M.map(m=>[m.id,m]));
-  const c={};M.forEach(m=>c[m.dept]=(c[m.dept]||0)+1);const base=DEPTS.filter(d=>c[d]);Object.keys(c).forEach(d=>{if(!base.includes(d))base.push(d);});DEPTS=base;}
+function rebuildM(){
+  const ov=(m,r)=>r&&r.info?{...m,level:r.info.level||m.level,freq:r.info.freq||m.freq,swami:r.info.swami||m.swami}:m;
+  const base=DATA.meetings.map(m=>ov({...m,baseLevel:m.level},store[m.id]));
+  const extra=Object.entries(store).filter(([,r])=>r&&r.custom&&!r.custom.deleted&&r.custom.date).map(([id,r])=>ov({id,date:r.custom.date,dept:r.custom.dept,level:r.custom.level,baseLevel:r.custom.level,series:r.custom.series,freq:r.custom.freq||'One-off',swami:r.custom.swami||'No',custom:true},r));
+  M=[...base,...extra];BYID=Object.fromEntries(M.map(m=>[m.id,m]));
+  const c={};M.forEach(m=>c[m.dept]=(c[m.dept]||0)+1);const keep=DEPTS.filter(d=>c[d]);Object.keys(c).forEach(d=>{if(!keep.includes(d))keep.push(d);});DEPTS=keep;}
+const seriesKey=m=>m.dept+'|'+(m.series||m.baseLevel||m.level);
 const MONTHS=(()=>{const o=[];for(let i=0;i<12;i++)o.push(iso(new Date(2026,9+i,1)).slice(0,7));return o;})();
 function eff(m){const t=track(m);return t.status==='Postponed'&&t.postponedTo?t.postponedTo:m.date;}
 function derived(m){const t=track(m);
@@ -898,11 +913,16 @@ function validate(t){
   for(const k of['postponedTo','completedOn']){const v=t[k];if(v&&(+v.slice(0,4)<2000||isNaN(parse(v))))return'Check the date: the year looks incomplete';}
   for(const a of t.actions||[])if(a.due&&+a.due.slice(0,4)<2000)return'Check the due date on "'+a.text+'"';
   return'';}
-function saveDrawer(close){const m=BYID[D.id];const err=validate(D.draft);if(err){toast(err,true);return;}
+function saveDrawer(close){let m=BYID[D.id];const err=validate(D.draft);if(err){toast(err,true);return;}
   if(D.draft.status==='Postponed'&&!D.draft.postponedTo&&!D.warned){D.warned=true;toast('No new date set. Click Save again to save it as rescheduled without a date',true);return;}
-  if(setTrack(m,clone(D.draft))===false)return;D.draft=clone(track(m));D.dirty=false;D.remote=false;D.base=(store[m.id]||{}).updated||'';D.warned=false;D.confirm=false;
+  const inf=D.draft.info;if(inf){inf.level=(inf.level||'').trim();if(!inf.level){toast('The meeting name cannot be empty',true);return;}
+}
+  const later=inf&&(D.infoScope||'all')==='all'?M.filter(x=>seriesKey(x)===seriesKey(m)&&x.id!==m.id&&eff(x)>=eff(m)):[];
+  if(setTrack(m,clone(D.draft))===false)return;
+  if(inf&&later.length){later.forEach(x=>setTrack(x,{info:{...inf}}));toast(`Saved, and updated ${plural(later.length,'later meeting')}`,true);blockT=Date.now();}
+  D.editInfo=false;D.draft=clone(track(m));D.dirty=false;D.remote=false;D.base=(store[m.id]||{}).updated||'';D.warned=false;D.confirm=false;
   toast('Changes saved');if(close)closeDrawer();else{renderDrawer();softRefresh();}}
-function discardDrawer(close){const m=BYID[D.id];D.draft=clone(track(m));D.dirty=false;D.remote=false;D.confirm=false;if(close)closeDrawer();else{renderDrawer();toast('Changes discarded');}}
+function discardDrawer(close){const m=BYID[D.id];D.draft=clone(track(m));D.dirty=false;D.remote=false;D.confirm=false;D.editInfo=false;if(close)closeDrawer();else{renderDrawer();toast('Changes discarded');}}
 function saveBar(onSave,onDiscard,saveLabel){
   if(D.confirm)return h('div',{class:'dr-save confirm'},h('span',{class:'sv-msg',text:'You have unsaved changes.'}),
     h('button',{type:'button',class:'btn sm ghost',text:'Keep editing',onclick:()=>{D.confirm=false;D.isNew?renderNew():renderDrawer();}}),
@@ -920,8 +940,8 @@ function whereBlock(m,t){
   const link=t.mode==='Online'?field(h('input',{class:'inp',id:'dr-link',type:'url',value:t.link,placeholder:'Meeting link, e.g. https://zoom.us/j/…','aria-label':'Meeting link'}),'link',{trim:true}):null;
   const open=/^https?:\/\//i.test(t.link||'')&&t.mode==='Online'?h('a',{class:'btn sm',href:t.link,target:'_blank',rel:'noopener',html:I.ext+'Join'}):
     (t.mode!=='Online'&&t.location?h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(t.location),target:'_blank',rel:'noopener',html:I.pin+'Map'}):null);
-  const later=m?M.filter(x=>x.dept===m.dept&&x.level===m.level&&x.id!==m.id&&eff(x)>=TODAY_ISO&&track(x).status!=='Cancelled'):[];
-  const copyAll=m&&later.length?h('button',{type:'button',class:'btn sm ghost',text:`Use this time and place for all ${later.length} upcoming ${m.level} meetings`,
+  const later=m?M.filter(x=>seriesKey(x)===seriesKey(m)&&x.id!==m.id&&eff(x)>=TODAY_ISO&&track(x).status!=='Cancelled'):[];
+  const copyAll=m&&later.length?h('button',{type:'button',class:'btn sm ghost',text:`Use this time and place for all ${later.length} upcoming meetings in this series`,
     onclick:()=>{const p={mode:D.draft.mode,location:D.draft.location,link:D.draft.link,start:D.draft.start,end:D.draft.end};let n=0;later.forEach(x=>{if(setTrack(x,p)!==false)n++;});
       if(n){toast(`Applied to ${plural(n,'other meeting')}. Click Save to keep this one too`,true);softRefresh();}}}):null;
   const st=h('input',{type:'time',id:'dr-st',value:t.start,step:'300','aria-label':'Start time'});
@@ -932,6 +952,19 @@ function whereBlock(m,t){
     h('div',{class:'where-row'},h('span',{class:'where-lab',text:'Where'}),h('div',{class:'tri wide',role:'group','aria-label':'Meeting type'},modeBtn('In person','pin'),modeBtn('Online','video'))),
     h('div',{class:'where-row'},loc,link,open),copyAll);
 }
+const FREQS=['Weekly','Fortnightly','Twice monthly','Monthly','Bi-monthly','Quarterly','One-off'];
+function infoEditor(m){const inf=D.draft.info||(D.draft.info={level:m.level,freq:m.freq,swami:m.swami});
+  const nm=h('input',{class:'inp',id:'ei-level',value:inf.level,'aria-label':'Meeting name'});nm.addEventListener('input',()=>{inf.level=nm.value;mark();});
+  const fq=h('select',{class:'inp',id:'ei-freq','aria-label':'Frequency',onchange:e=>{inf.freq=e.target.value;mark();}},[...new Set([...FREQS,inf.freq])].map(f=>{const o=h('option',{value:f,text:f});if(f===inf.freq)o.selected=true;return o;}));
+  const sw=h('select',{class:'inp',id:'ei-sw','aria-label':"Swami's presence",onchange:e=>{inf.swami=e.target.value;mark();}},[['Yes','Required'],['Occasionally','Occasionally'],['No','Not required']].map(([v,l])=>{const o=h('option',{value:v,text:l});if(v===inf.swami)o.selected=true;return o;}));
+  const n=M.filter(x=>seriesKey(x)===seriesKey(m)&&x.id!==m.id&&eff(x)>=eff(m)).length;
+  const scope=n?h('div',{class:'ei-scope',role:'radiogroup','aria-label':'Apply changes to'},
+    [['one','This meeting only'],['all',`This and all ${n} later meetings in the series`]].map(([k,l])=>h('label',{},h('input',{type:'radio',name:'ei-scope',value:k,checked:(D.infoScope||'all')===k?true:null,onchange:()=>{D.infoScope=k;mark();}}),' '+l))):null;
+  return h('div',{class:'ei-box'},
+    h('div',{class:'ei-row'},h('label',{for:'ei-level',text:'Meeting name'}),nm),
+    h('div',{class:'ei-row'},h('label',{for:'ei-freq',text:'Frequency'}),fq),
+    h('div',{class:'ei-row'},h('label',{for:'ei-sw',text:"Swami's presence"}),sw),scope,
+    h('p',{class:'hint',text:'Click Save changes at the bottom to keep these.'}));}
 function renderDrawer(focusId){
   if(D&&D.isNew)return renderNew(focusId);
   const m=BYID[ui.drawer];if(!m||!D)return;const t=D.draft,d=document.getElementById('drawer');d.setAttribute('data-dept',m.dept);
@@ -947,7 +980,9 @@ function renderDrawer(focusId){
   const head=h('div',{class:'dr-head'},
     h('div',{class:'dr-top'},h('div',{},h('span',{class:'dr-dept'},h('i',{class:'dot'}),m.dept,m.custom?h('span',{class:'tent',text:'Added meeting'}):null),h('h2',{id:'dr-title',text:m.level}),
       h('div',{class:'dr-when'},h('span',{text:long(effD)+(t.start?' · '+timeText(t):'')}),h('span',{text:m.freq}),m.swami==='Yes'?h('span',{class:'swami',text:'Swami required'}):m.swami==='Occasionally'?h('span',{text:'Swami occasionally'}):null,m.tentative?h('span',{class:'tent',text:'Tentative'}):null)),
-      h('button',{type:'button',class:'icon-btn x','aria-label':'Close',html:I.x,onclick:requestClose})),
+      h('div',{class:'dr-acts'},h('button',{type:'button',class:'btn sm'+(D.editInfo?' on':''),id:'ed-info',html:I.edit+'Edit details','aria-expanded':String(!!D.editInfo),onclick:()=>{D.editInfo=!D.editInfo;if(D.editInfo&&!D.draft.info)D.draft.info={level:m.level,freq:m.freq,swami:m.swami};renderDrawer(D.editInfo?'ei-level':'ed-info');}}),
+        h('button',{type:'button',class:'icon-btn x','aria-label':'Close',html:I.x,onclick:requestClose}))),
+    D.editInfo?infoEditor(m):null,
     m.note?h('div',{class:'dr-note',text:m.note}):null,
     h('div',{class:'status-row',role:'group','aria-label':'Meeting status'},stBtn('Scheduled','Scheduled'),stBtn('Completed','Completed'),stBtn('Postponed','Rescheduled'),stBtn('Cancelled','Cancelled')),extra,whereBlock(m,t),
     h('div',{class:'dr-tabs',role:'tablist'},tabs.map(([k,l,n])=>h('button',{type:'button',role:'tab','aria-selected':String(ui.tab===k),onclick:()=>{ui.tab=k;renderDrawer();}},l,n))));
@@ -960,7 +995,7 @@ function renderDrawer(focusId){
     const add=()=>{const inp=document.getElementById('dr-nat');const names=inp.value.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);if(!names.length){inp.focus();return;}
       const have=new Set(atts.map(a=>a.name.toLowerCase()));const nw=names.filter(n=>!have.has(n.toLowerCase())).map(n=>({id:uid(),name:n,att:'Present'}));
       setA([...atts,...nw],'dr-nat');if(!nw.length)toast('Already on the list');};
-    const prev=M.filter(x=>x.dept===m.dept&&x.level===m.level&&eff(x)<eff(m)&&track(x).attendees.length).sort(byDate).pop();
+    const prev=M.filter(x=>seriesKey(x)===seriesKey(m)&&eff(x)<eff(m)&&track(x).attendees.length).sort(byDate).pop();
     const c=k=>atts.filter(a=>a.att===k).length;
     body.append(h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-nat',list:'people',placeholder:'Type a name, or several separated by commas','aria-label':'Add attendee',onkeydown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}}),
       h('button',{type:'button',class:'btn primary',html:I.plus+'Add',onclick:add})),
