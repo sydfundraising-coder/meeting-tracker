@@ -461,6 +461,7 @@ input[type=date],.inp{height:38px;border:1px solid var(--line-2);border-radius:1
 .ask-q b{font-size:14.5px}
 .ask-q span{font-size:13px;color:var(--muted)}
 .ask-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.dr-body>*{flex-shrink:0}
 .dr-acts{margin-left:auto;display:flex;gap:6px;align-items:flex-start;margin-top:-4px}
 .dr-top .x{margin:0}
 .btn.on{background:var(--surface-2);border-color:var(--fg)}
@@ -895,6 +896,7 @@ function actCard(x){const{m,a}=x;
 /* ---------- drawer ---------- */
 let lastFocus=null,D=null;
 const clone=o=>JSON.parse(JSON.stringify(o));
+const app=(el,...k)=>el.append(...k.flat().filter(x=>x!=null&&x!==false&&x!==''));
 function openDrawer(id,tab){const m=BYID[id];if(!m)return;lastFocus=document.activeElement;ui.drawer=id;ui.tab=tab||'notes';
   D={id,draft:clone(track(m)),dirty:false,remote:false,base:(store[id]||{}).updated||'',confirm:false};showDrawer();renderDrawer();}
 function openNew(){lastFocus=document.activeElement;ui.drawer='__new';
@@ -1000,7 +1002,7 @@ function renderDrawer(focusId){
     h('div',{class:'dr-tabs',role:'tablist'},tabs.map(([k,l,n])=>h('button',{type:'button',role:'tab','aria-selected':String(ui.tab===k),onclick:()=>{ui.tab=k;renderDrawer();}},l,n))));
   const body=h('div',{class:'dr-body',role:'tabpanel'});
   if(ui.tab==='notes'){
-    body.append(h('div',{class:'fld'},h('label',{for:'dr-ag'},'Agenda',h('small',{text:'what will be discussed'})),field(h('textarea',{id:'dr-ag',rows:'6',placeholder:'1. Opening prayer\n2. Actions from last meeting\n3. …',value:t.agenda}),'agenda')),
+    app(body,h('div',{class:'fld'},h('label',{for:'dr-ag'},'Agenda',h('small',{text:'what will be discussed'})),field(h('textarea',{id:'dr-ag',rows:'6',placeholder:'1. Opening prayer\n2. Actions from last meeting\n3. …',value:t.agenda}),'agenda')),
       h('div',{class:'fld'},h('label',{for:'dr-nt'},'Meeting notes',h('small',{text:'discussion and decisions'})),field(h('textarea',{id:'dr-nt',rows:'8',placeholder:'Key points, decisions made, anything to follow up',value:t.notes}),'notes')));
   }else if(ui.tab==='people'){
     const atts=t.attendees,setA=(list,f)=>upd({attendees:list},true,f);
@@ -1009,16 +1011,16 @@ function renderDrawer(focusId){
       setA([...atts,...nw],'dr-nat');if(!nw.length)toast('Already on the list');};
     const prev=M.filter(x=>seriesKey(x)===seriesKey(m)&&eff(x)<eff(m)&&track(x).attendees.length).sort(byDate).pop();
     const c=k=>atts.filter(a=>a.att===k).length;
-    body.append(h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-nat',list:'people',placeholder:'Type a name, or several separated by commas','aria-label':'Add attendee',onkeydown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}}),
+    app(body,h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-nat',list:'people',placeholder:'Type a name, or several separated by commas','aria-label':'Add attendee',onkeydown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}}),
       h('button',{type:'button',class:'btn primary',html:I.plus+'Add',onclick:add})),
       m.regulars&&!atts.length?h('button',{type:'button',class:'btn',style:'align-self:flex-start',html:I.ppl+`Add regular attendees (${m.regulars.join(', ')})`,onclick:()=>setA(m.regulars.map(n=>({id:uid(),name:n,att:'Present'})),'dr-nat')}):null,
       prev&&!atts.length?h('button',{type:'button',class:'btn',style:'align-self:flex-start',html:I.copy+`Copy the list from ${short(eff(prev))}`,onclick:()=>setA(track(prev).attendees.map(a=>({id:uid(),name:a.name,att:'Present'})),'dr-nat')}):null);
-    if(atts.length){body.append(h('div',{class:'counts'},h('span',{class:'pill p-Completed',text:`${c('Present')} present`}),h('span',{class:'pill p-Postponed',text:`${c('Apology')} ${c('Apology')===1?'apology':'apologies'}`}),h('span',{class:'pill p-need',text:`${c('Absent')} absent`})),
+    if(atts.length){app(body,h('div',{class:'counts'},h('span',{class:'pill p-Completed',text:`${c('Present')} present`}),h('span',{class:'pill p-Postponed',text:`${c('Apology')} ${c('Apology')===1?'apology':'apologies'}`}),h('span',{class:'pill p-need',text:`${c('Absent')} absent`})),
       h('ul',{class:'att-list'},atts.map((a,i)=>h('li',{class:a.att},av(a.name),h('span',{class:'nm',text:a.name}),
         h('span',{class:'tri',role:'group','aria-label':'Attendance for '+a.name},['Present','Apology','Absent'].map(s=>h('button',{type:'button','data-s':s,'aria-pressed':String(a.att===s),text:s,onclick:()=>setA(atts.map((x,j)=>j===i?{...x,att:s}:x))}))),
         h('button',{type:'button',class:'icon-btn danger','aria-label':'Remove '+a.name,html:I.x,onclick:()=>setA(atts.filter((_,j)=>j!==i))})))),
       h('p',{class:'hint',text:'Everyone you add starts as present. Change anyone who sent apologies or was absent.'}));}
-    else body.append(h('p',{class:'hint',text:'Names you have used before are suggested as you type.'}));
+    else app(body,h('p',{class:'hint',text:'Names you have used before are suggested as you type.'}));
   }else{
     const acts=t.actions,setL=(list,f)=>upd({actions:list},true,f);
     const setOne=(id,patch,re)=>{const a=D.draft.actions.find(x=>x.id===id);Object.assign(a,patch);mark();if(re)renderDrawer();};
@@ -1026,20 +1028,20 @@ function renderDrawer(focusId){
       if(du.value&&+du.value.slice(0,4)<2000){toast('Check the due date: the year looks incomplete',true);du.focus();return;}
       setL([...acts,{id:uid(),text:tx.value.trim(),owner:ow.value.trim(),due:du.value,status:'Open',created:TODAY_ISO}],'dr-na');};
     const ent=e=>{if(e.key==='Enter'){e.preventDefault();add();}};
-    body.append(h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-na',placeholder:'What needs to be done?','aria-label':'New action',onkeydown:ent}),
+    app(body,h('div',{class:'addbar'},h('input',{class:'inp',id:'dr-na',placeholder:'What needs to be done?','aria-label':'New action',onkeydown:ent}),
       h('input',{class:'inp ow',id:'dr-nao',list:'people',placeholder:'Who','aria-label':'Owner',onkeydown:ent}),
       h('input',{type:'date',id:'dr-nad','aria-label':'Due date',min:'2026-01-01',max:'2030-12-31'}),h('button',{type:'button',class:'btn primary',html:I.plus+'Add',onclick:add})));
-    if(acts.length)body.append(h('ul',{class:'act-list'},acts.map(a=>{const tx=h('input',{class:'tx',value:a.text,'aria-label':'Action'});tx.addEventListener('input',()=>setOne(a.id,{text:tx.value}));
+    if(acts.length)app(body,h('ul',{class:'act-list'},acts.map(a=>{const tx=h('input',{class:'tx',value:a.text,'aria-label':'Action'});tx.addEventListener('input',()=>setOne(a.id,{text:tx.value}));
       const ow=h('input',{class:'inp',list:'people',value:a.owner,placeholder:'Owner','aria-label':'Owner'});ow.addEventListener('input',()=>setOne(a.id,{owner:ow.value}));
       const du=h('input',{type:'date',value:a.due,'aria-label':'Due date',min:'2026-01-01',max:'2030-12-31'});const sd=()=>setOne(a.id,{due:du.value});du.addEventListener('input',sd);du.addEventListener('change',sd);
       return h('li',{class:(a.status==='Done'?'done ':'')+(overdue(a)?'late':'')},
       h('button',{type:'button',class:'chk','aria-pressed':String(a.status==='Done'),'aria-label':a.status==='Done'?'Reopen':'Mark done',html:I.check,onclick:()=>setOne(a.id,{status:a.status==='Done'?'Open':'Done',doneOn:a.status==='Done'?'':TODAY_ISO},true)}),
       tx,h('button',{type:'button',class:'icon-btn danger','aria-label':'Delete action',html:I.x,onclick:()=>setL(acts.filter(x=>x.id!==a.id))}),
       h('div',{class:'sub'},h('span',{class:'tri',role:'group','aria-label':'Progress'},ACT_ST.map(s=>h('button',{type:'button','data-s':s,'aria-pressed':String(a.status===s),text:s,onclick:()=>setOne(a.id,{status:s,doneOn:s==='Done'?TODAY_ISO:''},true)}))),ow,du));})));
-    else body.append(h('p',{class:'hint',text:'Add each thing agreed in the meeting, who will do it and by when. Track progress here or on the Action items board.'}));
+    else app(body,h('p',{class:'hint',text:'Add each thing agreed in the meeting, who will do it and by when. Track progress here or on the Action items board.'}));
   }
   const saved=store[m.id];
-  body.append(h('div',{class:'dr-links'},h('span',{class:'lab',text:'Add to calendar'}),
+  app(body,h('div',{class:'dr-links'},h('span',{class:'lab',text:'Add to calendar'}),
     h('a',{class:'btn sm',href:gLink(m),target:'_blank',rel:'noopener',text:'Google'}),h('a',{class:'btn sm',href:oLink(m),target:'_blank',rel:'noopener',text:'Outlook'}),
     h('button',{type:'button',class:'btn sm',text:'.ics',onclick:()=>dlIcs([m],fileSafe(m.dept+'_'+m.level+'_'+eff(m))+'.ics',title(m))}),h('span',{class:'sp'}),
     h('button',{type:'button',class:'btn sm',html:I.copy+'Copy minutes',onclick:()=>copyMinutes(m)}),
@@ -1080,7 +1082,7 @@ function renderNew(focusId){
     row('Department',deptSel,nd),row('Meeting name',lv),row('Date',dt),row('Repeats',rep,un?h('span',{class:'muted-to',text:'until'}):null,un),
     row("Swami's presence",sw),
     h('div',{class:'fld'},h('label',{text:'Time and place'}),whereBlock(null,t)));
-  if(t.repeat!=='none'&&c.date&&t.until&&+c.date.slice(0,4)>=2000&&+t.until.slice(0,4)>=2000){const n=occurrences(c.date,t.repeat,t.until).length;body.append(h('p',{class:'hint',text:`This creates ${plural(n,'meeting')}, from ${short(c.date)} to ${short(occurrences(c.date,t.repeat,t.until).pop())}.`}));}
+  if(t.repeat!=='none'&&c.date&&t.until&&+c.date.slice(0,4)>=2000&&+t.until.slice(0,4)>=2000){const n=occurrences(c.date,t.repeat,t.until).length;app(body,h('p',{class:'hint',text:`This creates ${plural(n,'meeting')}, from ${short(c.date)} to ${short(occurrences(c.date,t.repeat,t.until).pop())}.`}));}
   d.replaceChildren(head,body,saveBar(addMeeting,()=>closeDrawer(),'Add meeting'));
   if(focusId)setTimeout(()=>document.getElementById(focusId)?.focus(),0);
 }
