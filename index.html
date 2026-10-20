@@ -462,6 +462,57 @@ input[type=date],.inp{height:38px;border:1px solid var(--line-2);border-radius:1
 .ask-q span{font-size:13px;color:var(--muted)}
 .ask-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .dr-body>*{flex-shrink:0}
+.at-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:20px}
+.at-stat{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow-1)}
+.at-stat b{font-family:var(--f-display);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.at-stat span{font-size:12.5px;color:var(--muted);font-weight:600}
+.at-stat.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.at-stat.alert b{color:var(--alert)}
+.at-stat:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.at-prog{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:13px}
+.at-prog span{font-weight:700;white-space:nowrap}.at-prog .bar{flex:1}.at-prog small{color:var(--muted);white-space:nowrap}
+.at-tools{margin-top:14px}
+.atable{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-1)}
+.at-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 120px 80px 110px 110px;gap:14px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer}
+.at-row:hover{background:var(--surface-2)}
+.at-row:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.at-head{cursor:default;border-top:0;background:var(--surface-2);font-size:12px;font-weight:700;color:var(--muted);padding-block:9px}
+.at-head:hover{background:var(--surface-2)}
+.at-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.at-main b{font-size:14.5px;font-weight:600}
+.at-row.done .at-main b{text-decoration:line-through;color:var(--muted)}
+.at-main small{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.at-upd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block!important}
+.at-ow{display:inline-flex;gap:7px;align-items:center;font-size:13px;font-weight:600;min-width:0}
+.at-ow .av{width:24px;height:24px;font-size:10px}
+.at-ow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pri{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:6px;justify-self:start;white-space:nowrap}
+.pri-High{background:var(--alert-soft);color:var(--alert)}.pri-Medium{background:var(--moved-soft);color:var(--moved)}.pri-Low{background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.at-pb{display:flex;align-items:center;gap:6px;width:100%}
+.at-pb i{display:block;height:6px;border-radius:6px;background:var(--done);min-width:2px}
+.at-pb{position:relative}
+.at-pb::before{content:"";position:absolute;left:0;right:34px;height:6px;border-radius:6px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);z-index:0}
+.at-pb i{position:relative;z-index:1;max-width:calc(100% - 34px)}
+.at-pb em{font-style:normal;font-size:11.5px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.ac-top{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.ac-upd{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acard{cursor:pointer}.acard:hover{border-color:var(--line-2)}
+.a-mtg{all:unset;cursor:pointer;font-size:13px;color:var(--saffron-ink);font-weight:600;margin-top:4px;display:inline-block}
+.a-mtg:hover{text-decoration:underline}
+.ad-text{min-height:60px;padding:10px 12px;line-height:1.45;resize:vertical;width:100%}
+.ad-pv{font-size:13px;min-width:38px}
+#ad-prog{flex:1 1 200px;accent-color:var(--done)}
+.upd-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.upd-list li{display:grid;grid-template-columns:30px 1fr;gap:10px}
+.upd-meta{font-size:12px;color:var(--muted);font-weight:600}
+.upd-text{font-size:14px;white-space:pre-wrap}
+.alist-mini li.clk{cursor:pointer}.alist-mini li.clk:hover b{text-decoration:underline}
+@media (max-width:1000px){.at-row{grid-template-columns:minmax(0,1fr) 120px 100px;}.at-row>.pri,.at-row>.at-pb,.at-head span:nth-child(4),.at-head span:nth-child(5){display:none}.at-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:600px){.at-row{grid-template-columns:1fr auto}.at-row>.at-ow,.at-row>.duechip,.at-head{display:none}.at-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dr-top>.x{margin-left:auto!important;margin-top:-4px!important}
+.tri button[aria-pressed="true"][data-s="High"]{background:var(--alert);color:#fff}
+.tri button[aria-pressed="true"][data-s="Medium"]{background:var(--moved);color:#fff}
+.tri button[aria-pressed="true"][data-s="Low"]{background:var(--fg);color:var(--bg)}
 .dr-acts{margin-left:auto;display:flex;gap:6px;align-items:flex-start;margin-top:-4px}
 .dr-top .x{margin:0}
 .btn.on{background:var(--surface-2);border-color:var(--fg)}
@@ -748,7 +799,7 @@ function renderDash(v){
       h('button',{type:'button',class:'btn sm',text:'Open board',onclick:()=>go('actions')})),
     acts.length?h('div',{class:'bar',role:'img','aria-label':'Action progress'},
       h('i',{style:`width:${acts.filter(a=>a.status==='Done').length/acts.length*100}%;background:var(--done)`}),h('i',{style:`width:${acts.filter(a=>a.status==='In progress').length/acts.length*100}%;background:var(--moved)`})):null,
-    openList.length?h('ul',{class:'alist-mini'},openList.map(x=>h('li',{},x.a.owner?av(x.a.owner):h('span',{class:'av',style:'--h:0;background:var(--sched)',text:'?'}),
+    openList.length?h('ul',{class:'alist-mini'},openList.map(x=>h('li',{class:'clk',onclick:()=>openAction(x.m.id,x.a.id)},x.a.owner?av(x.a.owner):h('span',{class:'av',style:'--h:0;background:var(--sched)',text:'?'}),
       h('div',{class:'tx'},h('b',{text:x.a.text}),h('small',{text:`${x.a.owner||'No owner'} · ${x.m.dept} ${x.m.level}`})),dueChip(x.a)))):
       h('div',{class:'empty',style:'padding:20px'},acts.length?'All actions are done.':'Open a meeting, then use the Action items tab to add what was agreed.')));
   // attendance
@@ -865,33 +916,112 @@ function renderMonth(v){
     list.length?h('div',{class:'rows'},list.map(row)):h('div',{class:'panel empty'},h('b',{text:'No meetings on this day'}),'Pick another day, or click it again to see the whole month.'));
 }
 
-/* ---------- actions board ---------- */
+/* ---------- action tracker ---------- */
+const PRI=['High','Medium','Low'];
+const priRank=p=>({High:0,Medium:1,Low:2}[p||'Medium']);
+const lastUpd=a=>(a.updates&&a.updates.length)?a.updates[a.updates.length-1]:null;
+const actTouched=a=>{const u=lastUpd(a);return u?u.at:(a.doneOn||a.created||'');};
+const AF={all:['All',()=>true],open:['Not started',x=>x.a.status==='Open'],prog:['In progress',x=>x.a.status==='In progress'],late:['Overdue',x=>overdue(x.a)],week:['Due in 7 days',x=>dueSoon(x.a)],done:['Done',x=>x.a.status==='Done']};
+function allActions(){return base().flatMap(m=>track(m).actions.map(a=>({m,a})));}
 function renderActions(v){
-  const B=base();const all=B.flatMap(m=>track(m).actions.map(a=>({m,a})));
+  const all=allActions();ui.af=ui.af||'all';ui.av=ui.av||'list';ui.asort=ui.asort||'due';
   const owners=[...new Set(all.map(x=>x.a.owner).filter(Boolean))].sort();
-  const ow=h('select',{class:'select','aria-label':'Owner',onchange:e=>{ui.owner=e.target.value;render();}},[h('option',{value:'',text:'Everyone'}),...owners.map(o=>{const op=h('option',{value:o,text:o});if(o===ui.owner)op.selected=true;return op;})]);
-  const od=all.filter(x=>overdue(x.a)).length;
-  v.append(h('div',{class:'list-head'},h('label',{style:'display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px'},'Owner',ow),
-    od?h('span',{class:'pill p-need',html:I.alert+plural(od,'overdue action')}):null));
-  if(!all.length){v.append(h('div',{class:'panel empty',style:'margin-top:20px'},ic('task'),h('b',{text:'No action items yet'}),'Open any meeting and use its Action items tab to record what was agreed, who owns it and when it is due.',h('div',{style:'margin-top:14px'},h('button',{type:'button',class:'btn primary',text:'Go to meetings',onclick:()=>go('list')}))));return;}
-  const items=all.filter(x=>!ui.owner||x.a.owner===ui.owner);
-  const sortA=(p,q)=>(p.a.due||'9999').localeCompare(q.a.due||'9999')||eff(p.m).localeCompare(eff(q.m));
-  const cols=[['Open','var(--fg)','Not started'],['In progress','var(--moved)','In progress'],['Done','var(--done)','Done']];
-  v.append(h('div',{class:'board'},cols.map(([s,c,l])=>{const xs=items.filter(x=>x.a.status===s).sort(s==='Done'?(p,q)=>(q.a.doneOn||'').localeCompare(p.a.doneOn||''):sortA);
-    return h('section',{class:'col','aria-label':l},h('div',{class:'col-h'},h('i',{style:`--c:${c}`}),h('h3',{text:l}),h('span',{text:xs.length})),
-      xs.length?xs.map(actCard):h('div',{class:'col-empty',text:s==='Done'?'Finished actions land here.':'Nothing here.'}));})));
+  const tot=all.length,dn=all.filter(x=>x.a.status==='Done').length;
+  const sel=(id,label,val,opts,on)=>h('select',{class:'select',id,'aria-label':label,onchange:e=>on(e.target.value)},opts.map(([v2,l])=>{const o=h('option',{value:v2,text:l});if(v2===val)o.selected=true;return o;}));
+  v.append(h('div',{class:'at-stats'},Object.entries(AF).map(([k,[l,f]])=>{const n=all.filter(f).length;
+    return h('button',{type:'button',class:'at-stat'+(ui.af===k?' on':'')+(k==='late'&&n?' alert':''),'aria-pressed':String(ui.af===k),onclick:()=>{ui.af=k;render();}},h('b',{text:n}),h('span',{text:l}));})),
+    tot?h('div',{class:'at-prog'},h('span',{text:`${Math.round(dn/tot*100)}% complete`}),h('div',{class:'bar'},h('i',{style:`width:${dn/tot*100}%;background:var(--done)`}),h('i',{style:`width:${all.filter(x=>x.a.status==='In progress').length/tot*100}%;background:var(--moved)`})),h('small',{text:`${dn} of ${plural(tot,'action')} done`})):null,
+    h('div',{class:'list-head at-tools'},
+      h('div',{class:'seg',role:'group','aria-label':'Layout'},[['list','List'],['board','Board']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(ui.av===k),text:l,onclick:()=>{ui.av=k;render();}}))),
+      sel('af-owner','Owner',ui.owner,[['','Everyone'],...owners.map(o=>[o,o])],x=>{ui.owner=x;render();}),
+      sel('af-pri','Priority',ui.apri||'',[['','Any priority'],...PRI.map(p=>[p,p+' priority'])],x=>{ui.apri=x;render();}),
+      sel('af-sort','Sort',ui.asort,[['due','Sort: due date'],['pri','Sort: priority'],['upd','Sort: recently updated'],['mtg','Sort: meeting date']],x=>{ui.asort=x;render();}),
+      h('span',{style:'flex:1'}),
+      h('button',{type:'button',class:'btn primary',html:I.plus+'Add action',onclick:()=>openNewAction()})));
+  if(!tot){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},ic('task'),h('b',{text:'No action items yet'}),'Click Add action, or open a meeting and use its Action items tab to record what was agreed.'));return;}
+  let items=all.filter(AF[ui.af][1]).filter(x=>(!ui.owner||x.a.owner===ui.owner)&&(!ui.apri||(x.a.priority||'Medium')===ui.apri));
+  const S={due:(p,q)=>(p.a.status==='Done')-(q.a.status==='Done')||(p.a.due||'9999').localeCompare(q.a.due||'9999'),pri:(p,q)=>priRank(p.a.priority)-priRank(q.a.priority)||(p.a.due||'9999').localeCompare(q.a.due||'9999'),
+    upd:(p,q)=>actTouched(q.a).localeCompare(actTouched(p.a)),mtg:(p,q)=>eff(q.m).localeCompare(eff(p.m))};
+  items.sort(S[ui.asort]);
+  if(!items.length){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},h('b',{text:'No actions match'}),'Try another filter.'));return;}
+  if(ui.av==='board'){const cols=[['Open','var(--fg)','Not started'],['In progress','var(--moved)','In progress'],['Done','var(--done)','Done']];
+    v.append(h('div',{class:'board'},cols.map(([s,c,l])=>{const xs=items.filter(x=>x.a.status===s);
+      return h('section',{class:'col','aria-label':l},h('div',{class:'col-h'},h('i',{style:`--c:${c}`}),h('h3',{text:l}),h('span',{text:xs.length})),xs.length?xs.map(actCard):h('div',{class:'col-empty',text:'Nothing here.'}));})));return;}
+  v.append(h('div',{class:'atable'},h('div',{class:'at-row at-head','aria-hidden':'true'},['Action','Owner','Due','Priority','Progress','Status'].map(x=>h('span',{text:x}))),items.map(actRow)));
 }
-function setAct(m,id,patch){setTrack(m,{actions:track(m).actions.map(a=>a.id===id?{...a,...patch}:a)});}
-function moveAct(m,a,s){setAct(m,a.id,{status:s,doneOn:s==='Done'?TODAY_ISO:''});toast(s==='Done'?'Action done':s==='In progress'?'Action started':'Action reopened');render();}
-function actCard(x){const{m,a}=x;
-  const mv=a.status==='Open'?[h('button',{type:'button',class:'btn sm',html:I.play+'Start',onclick:()=>moveAct(m,a,'In progress')}),h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:()=>moveAct(m,a,'Done')})]
-    :a.status==='In progress'?[h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:()=>moveAct(m,a,'Done')})]
-    :[h('button',{type:'button',class:'btn sm ghost',html:I.undo+'Reopen',onclick:()=>moveAct(m,a,'Open')})];
-  return h('article',{class:'acard'+(overdue(a)?' late':'')+(a.status==='Done'?' done':''),'data-dept':m.dept},
-    h('div',{class:'tx',text:a.text}),
-    h('button',{type:'button',class:'mt',onclick:()=>openDrawer(m.id,'actions')},h('i',{class:'dot'}),`${m.dept} · ${m.level} · ${short(eff(m))}`),
+function priTag(a){const p=a.priority||'Medium';return h('span',{class:'pri pri-'+p,text:p});}
+function progBar(a){const p=a.status==='Done'?100:(a.progress||0);return h('span',{class:'at-pb',title:p+'% complete'},h('i',{style:`width:${p}%`}),h('em',{text:p+'%'}));}
+function stPill(a){return h('span',{class:'pill '+(overdue(a)?'p-need':a.status==='Done'?'p-Completed':a.status==='In progress'?'p-Postponed':'p-Scheduled'),text:overdue(a)?'Overdue':a.status==='Open'?'Not started':a.status});}
+function actRow(x){const{m,a}=x,u=lastUpd(a);
+  return h('div',{class:'at-row'+(a.status==='Done'?' done':''),role:'button',tabindex:'0','data-dept':m.dept,'aria-label':'Open action: '+a.text,
+      onclick:()=>openAction(m.id,a.id),onkeydown:e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAction(m.id,a.id);}}},
+    h('div',{class:'at-main'},h('b',{text:a.text}),h('small',{},h('i',{class:'dot'}),`${m.dept} · ${m.level} · ${short(eff(m))}`),
+      u?h('small',{class:'at-upd',text:`Latest: ${u.text} (${u.by||'someone'}, ${short(u.at.slice(0,10))})`}):null),
+    h('span',{class:'at-ow'},a.owner?av(a.owner):null,h('span',{text:a.owner||'No owner'})),
+    a.status==='Done'?h('span',{class:'duechip',text:a.doneOn?'Done '+short(a.doneOn):'Done'}):dueChip(a),priTag(a),progBar(a),stPill(a));}
+function setAct(m,id,patch){return setTrack(m,{actions:track(m).actions.map(a=>a.id===id?{...a,...patch}:a)});}
+function moveAct(m,a,s){if(setAct(m,a.id,{status:s,doneOn:s==='Done'?TODAY_ISO:'',progress:s==='Done'?100:a.progress||0})===false)return;toast(s==='Done'?'Action done':s==='In progress'?'Action started':'Action reopened',true);blockT=Date.now();render();}
+function actCard(x){const{m,a}=x,u=lastUpd(a);
+  const mv=a.status==='Open'?[h('button',{type:'button',class:'btn sm',html:I.play+'Start',onclick:e=>{e.stopPropagation();moveAct(m,a,'In progress');}}),h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:e=>{e.stopPropagation();moveAct(m,a,'Done');}})]
+    :a.status==='In progress'?[h('button',{type:'button',class:'btn sm',html:I.check+'Done',onclick:e=>{e.stopPropagation();moveAct(m,a,'Done');}})]
+    :[h('button',{type:'button',class:'btn sm ghost',html:I.undo+'Reopen',onclick:e=>{e.stopPropagation();moveAct(m,a,'Open');}})];
+  return h('article',{class:'acard'+(overdue(a)?' late':'')+(a.status==='Done'?' done':''),'data-dept':m.dept,role:'button',tabindex:'0',onclick:()=>openAction(m.id,a.id),onkeydown:e=>{if(e.target===e.currentTarget&&e.key==='Enter')openAction(m.id,a.id);}},
+    h('div',{class:'ac-top'},h('div',{class:'tx',text:a.text}),priTag(a)),
+    h('span',{class:'mt'},h('i',{class:'dot'}),`${m.dept} · ${m.level} · ${short(eff(m))}`),
+    u?h('div',{class:'ac-upd',text:u.text}):null,
+    a.status==='In progress'?progBar(a):null,
     h('div',{class:'ft'},h('span',{class:'ow'},a.owner?av(a.owner):null,h('span',{text:a.owner||'No owner'})),a.status==='Done'?(a.doneOn?h('span',{class:'duechip',text:'Done '+short(a.doneOn)}):null):dueChip(a)),
     h('div',{class:'mv'},mv));}
+/* action drawer */
+function openAction(mid,aid){const m=BYID[mid];if(!m)return;const a=track(m).actions.find(x=>x.id===aid);if(!a)return;
+  lastFocus=document.activeElement;ui.drawer=mid;D={isAction:true,id:mid,aid,draft:{priority:'Medium',progress:0,updates:[],...clone(a)},dirty:false};showDrawer();renderActionDrawer();}
+function openNewAction(){lastFocus=document.activeElement;
+  const pool=M.filter(m=>(!ui.dept||m.dept===ui.dept)&&track(m).status!=='Cancelled');const past=pool.filter(m=>eff(m)<=TODAY_ISO).sort(byDate);
+  const def=(past.pop()||pool.sort(byDate)[0]||{}).id||'';
+  ui.drawer='__newact';D={isAction:true,isNewAction:true,id:def,draft:{id:uid(),text:'',owner:'',due:'',status:'Open',priority:'Medium',progress:0,updates:[],created:TODAY_ISO},dirty:false};showDrawer();renderActionDrawer();
+  setTimeout(()=>document.getElementById('ad-text')?.focus(),60);}
+function renderActionDrawer(focusId){const t=D.draft,d=document.getElementById('drawer');const m=BYID[D.id];d.setAttribute('data-dept',m?m.dept:'');
+  const txt=h('textarea',{class:'inp ad-text',id:'ad-text',rows:'2',placeholder:'What needs to be done?','aria-label':'Action',value:t.text});txt.addEventListener('input',()=>{t.text=txt.value;mark();});
+  const ow=h('input',{class:'inp',id:'ad-owner',list:'people',value:t.owner,placeholder:'Who is responsible','aria-label':'Owner'});ow.addEventListener('input',()=>{t.owner=ow.value;mark();});
+  const du=h('input',{type:'date',id:'ad-due',value:t.due,min:'2026-01-01',max:'2030-12-31','aria-label':'Due date'});const sdu=()=>{t.due=du.value;mark();};du.addEventListener('input',sdu);du.addEventListener('change',sdu);
+  const tri=(opts,cur,on,lab)=>h('span',{class:'tri wide',role:'group','aria-label':lab},opts.map(([v2,l])=>h('button',{type:'button','data-s':v2,'aria-pressed':String(cur===v2),text:l,onclick:()=>on(v2)})));
+  const pr=h('input',{type:'range',id:'ad-prog',min:'0',max:'100',step:'10',value:String(t.status==='Done'?100:t.progress||0),'aria-label':'Progress percent',disabled:t.status==='Done'?true:null});
+  const prl=h('b',{class:'ad-pv',text:(t.status==='Done'?100:t.progress||0)+'%'});pr.addEventListener('input',()=>{t.progress=+pr.value;prl.textContent=pr.value+'%';mark();});
+  const row=(lab,...k)=>h('div',{class:'nw-row'},h('label',{class:'nw-lab',text:lab}),h('div',{class:'nw-in'},...k));
+  let mtgSel=null;
+  if(D.isNewAction){const lo=iso(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-90)),hi=iso(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+120));
+    const pool=M.filter(x=>eff(x)>=lo&&eff(x)<=hi&&track(x).status!=='Cancelled'&&(!ui.dept||x.dept===ui.dept)).sort(byDate);
+    mtgSel=h('select',{class:'inp',id:'ad-mtg','aria-label':'Meeting',onchange:e=>{D.id=e.target.value;mark();renderActionDrawer('ad-mtg');}},pool.map(x=>{const o=h('option',{value:x.id,text:`${short(eff(x))} · ${x.dept} · ${x.level}`});if(x.id===D.id)o.selected=true;return o;}));}
+  const head=h('div',{class:'dr-head'},h('div',{class:'dr-top'},h('div',{},h('span',{class:'dr-dept'},h('i',{class:'dot'}),D.isNewAction?'New action item':'Action item'),
+      h('h2',{id:'dr-title',text:D.isNewAction?'Add an action':(t.text||'Action')}),
+      m&&!D.isNewAction?h('button',{type:'button',class:'a-mtg',onclick:()=>{if(D.dirty){toast('Save or discard your changes first',true);return;}openDrawer(m.id,'actions');}},`From: ${m.dept} · ${m.level} · ${short(eff(m))}`):null),
+    h('button',{type:'button',class:'icon-btn x','aria-label':'Close',html:I.x,onclick:requestClose})),h('div',{style:'height:14px'}));
+  const body=h('div',{class:'dr-body'});
+  app(body,mtgSel?row('Meeting',mtgSel):null,row('Action',txt),row('Owner',ow),row('Due date',du),
+    row('Priority',tri(PRI.map(p=>[p,p]),t.priority||'Medium',v2=>{t.priority=v2;mark();renderActionDrawer();},'Priority')),
+    row('Status',tri([['Open','Not started'],['In progress','In progress'],['Done','Done']],t.status,v2=>{t.status=v2;t.doneOn=v2==='Done'?(t.doneOn||TODAY_ISO):'';if(v2==='Done')t.progress=100;mark();renderActionDrawer();},'Status')),
+    row('Progress',pr,prl));
+  if(!D.isNewAction){const ups=(t.updates||[]).slice().reverse();
+    const ta=h('textarea',{class:'inp',id:'ad-upd',rows:'2',placeholder:'What has happened since the last update?','aria-label':'Progress update'});
+    const post=()=>{const v2=ta.value.trim();if(!v2){ta.focus();return;}if(CONFIGURED&&!myName&&!askName())return;
+      const u={at:new Date().toISOString(),by:myName||'',text:v2};t.updates=[...(t.updates||[]),u];
+      const mm=BYID[D.id];const cur=track(mm).actions.find(x=>x.id===D.aid);if(cur&&setAct(mm,D.aid,{updates:[...(cur.updates||[]),u]})!==false){toast('Update posted',true);blockT=Date.now();softRefresh();}renderActionDrawer('ad-upd');};
+    ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();post();}});
+    app(body,h('div',{class:'fld'},h('label',{for:'ad-upd'},'Progress updates',h('small',{text:'posted straight away and visible to everyone'})),
+      h('div',{class:'addbar'},ta,h('button',{type:'button',class:'btn primary',html:I.plus+'Post update',onclick:post})),
+      ups.length?h('ul',{class:'upd-list'},ups.map(u=>h('li',{},av(u.by||'?'),h('div',{},h('div',{class:'upd-meta',text:`${u.by||'Someone'} · ${fmt(new Date(u.at),{day:'numeric',month:'short'})}, ${new Date(u.at).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}`}),h('div',{class:'upd-text',text:u.text}))))):h('p',{class:'hint',text:'No updates yet.'})),
+      h('div',{class:'dr-links'},h('span',{class:'sp'}),h('button',{type:'button',class:'btn sm ghost danger-t',text:D.del?'Click again to delete':'Delete action',onclick:()=>{if(!D.del){D.del=true;renderActionDrawer();return;}
+        const mm=BYID[D.id];if(setTrack(mm,{actions:track(mm).actions.filter(x=>x.id!==D.aid)})!==false){D.dirty=false;toast('Action deleted',true);blockT=Date.now();closeDrawer();}}})));}
+  d.replaceChildren(head,body,saveBar(saveAction,discardAction,D.isNewAction?'Add action':'Save changes'));
+  if(focusId)setTimeout(()=>document.getElementById(focusId)?.focus(),0);}
+function saveAction(close){const t=D.draft;t.text=(t.text||'').trim();if(!t.text){toast('Describe the action first',true);document.getElementById('ad-text')?.focus();return;}
+  if(t.due&&+t.due.slice(0,4)<2000){toast('Check the due date: the year looks incomplete',true);return;}
+  const m=BYID[D.id];if(!m){toast('Choose the meeting this action came from',true);return;}
+  const acts=track(m).actions;const next=D.isNewAction?[...acts,clone(t)]:acts.map(a=>a.id===D.aid?{...clone(t),updates:a.updates||t.updates||[]}:a);
+  if(setTrack(m,{actions:next})===false)return;toast(D.isNewAction?'Action added':'Changes saved',true);blockT=Date.now();
+  if(D.isNewAction||close){D.dirty=false;closeDrawer();return;}
+  D.draft={priority:'Medium',progress:0,updates:[],...clone(track(m).actions.find(a=>a.id===D.aid))};D.dirty=false;D.confirm=false;renderActionDrawer();softRefresh();}
+function discardAction(close){if(close||D.isNewAction){D.dirty=false;closeDrawer();return;}const m=BYID[D.id];D.draft={priority:'Medium',progress:0,updates:[],...clone(track(m).actions.find(a=>a.id===D.aid))};D.dirty=false;D.confirm=false;renderActionDrawer();toast('Changes discarded');}
 
 /* ---------- drawer ---------- */
 let lastFocus=null,D=null;
@@ -904,13 +1034,13 @@ function openNew(){lastFocus=document.activeElement;ui.drawer='__new';
   showDrawer();renderNew();setTimeout(()=>document.getElementById('nw-level')?.focus(),60);}
 function showDrawer(){const d=document.getElementById('drawer'),s=document.getElementById('scrim');d.hidden=false;s.hidden=false;
   requestAnimationFrame(()=>{d.classList.add('on');s.classList.add('on');});document.body.style.overflow='hidden';setTimeout(()=>{if(!d.contains(document.activeElement))d.querySelector('.x')?.focus();},40);markSel();}
-function requestClose(){if(D&&D.dirty){D.confirm=true;D.isNew?renderNew():renderDrawer();setTimeout(()=>document.getElementById('cf-save')?.focus(),0);return;}closeDrawer();}
+function requestClose(){if(D&&D.dirty){D.confirm=true;renderDrawer();setTimeout(()=>document.getElementById('cf-save')?.focus(),0);return;}closeDrawer();}
 function closeDrawer(){const d=document.getElementById('drawer'),s=document.getElementById('scrim');if(!ui.drawer)return;
   ui.drawer=null;D=null;d.classList.remove('on');s.classList.remove('on');document.body.style.overflow='';
   setTimeout(()=>{if(!ui.drawer){d.hidden=true;s.hidden=true;}},260);render();if(lastFocus&&document.contains(lastFocus))lastFocus.focus();}
 function markSel(){document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));if(ui.drawer)document.getElementById('r-'+ui.drawer)?.classList.add('sel');}
 function softRefresh(){renderShell();const v=document.getElementById('view');const y=scrollY;v.replaceChildren();VIEW_FN[ui.view](v);scrollTo({top:y});markSel();refreshPeople();}
-function mark(){if(!D)return;if(!D.dirty){D.dirty=true;if(D.isNew)return;const b=document.getElementById('sv-state');if(b){b.textContent='Unsaved changes';b.classList.add('dirty');}
+function mark(){if(!D)return;if(!D.dirty){D.dirty=true;if(D.isNew||D.isNewAction)return;const b=document.getElementById('sv-state');if(b){b.textContent='Unsaved changes';b.classList.add('dirty');}
   const s=document.getElementById('sv-save');if(s)s.disabled=false;const x=document.getElementById('sv-discard');if(x)x.hidden=false;}}
 function upd(patch,rerender,focusId){Object.assign(D.draft,patch);mark();if(rerender)renderDrawer(focusId);}
 function field(el,key,opts){opts=opts||{};el.addEventListener('input',()=>{D.draft[key]=opts.trim?el.value.trim():el.value;mark();if(opts.after)opts.after(el.value);});
@@ -945,15 +1075,15 @@ function saveBar(onSave,onDiscard,saveLabel){
         h('button',{type:'button',class:'btn',id:'as-one',text:'This meeting only',onclick:()=>saveDrawer(a.close,'one')}),
         h('button',{type:'button',class:'btn primary',id:'as-all',text:`This and all ${a.n} later meetings`,onclick:()=>saveDrawer(a.close,'all')})));}
   if(D.confirm)return h('div',{class:'dr-save confirm'},h('span',{class:'sv-msg',text:'You have unsaved changes.'}),
-    h('button',{type:'button',class:'btn sm ghost',text:'Keep editing',onclick:()=>{D.confirm=false;D.isNew?renderNew():renderDrawer();}}),
+    h('button',{type:'button',class:'btn sm ghost',text:'Keep editing',onclick:()=>{D.confirm=false;renderDrawer();}}),
     h('button',{type:'button',class:'btn sm',text:'Discard',onclick:()=>onDiscard(true)}),
     h('button',{type:'button',class:'btn primary',id:'cf-save',text:saveLabel+' and close',onclick:()=>onSave(true)}));
   return h('div',{class:'dr-save'},
-    D.isNew?h('span',{class:'sv-state',text:'Nothing is added until you click Add meeting'}):h('span',{class:'sv-state'+(D.dirty?' dirty':''),id:'sv-state',text:D.dirty?'Unsaved changes':'All changes saved'}),
+    D.isNew||D.isNewAction?h('span',{class:'sv-state',text:D.isNewAction?'Nothing is added until you click Add action':'Nothing is added until you click Add meeting'}):h('span',{class:'sv-state'+(D.dirty?' dirty':''),id:'sv-state',text:D.dirty?'Unsaved changes':'All changes saved'}),
     D.remote?h('span',{class:'sv-remote',text:'Someone else changed this meeting. Saving will replace their changes.'}):null,
     h('span',{class:'sp'}),
-    h('button',{type:'button',class:'btn sm ghost',id:'sv-discard',hidden:D.isNew?null:(!D.dirty||null),text:D.isNew?'Cancel':'Discard changes',onclick:()=>D.isNew?closeDrawer():onDiscard(false)}),
-    h('button',{type:'button',class:'btn primary',id:'sv-save',disabled:D.isNew||D.dirty?null:true,html:I.check+saveLabel,onclick:()=>onSave(false)}));}
+    h('button',{type:'button',class:'btn sm ghost',id:'sv-discard',hidden:(D.isNew||D.isNewAction)?null:(!D.dirty||null),text:(D.isNew||D.isNewAction)?'Cancel':'Discard changes',onclick:()=>(D.isNew||D.isNewAction)?closeDrawer():onDiscard(false)}),
+    h('button',{type:'button',class:'btn primary',id:'sv-save',disabled:D.isNew||D.isNewAction||D.dirty?null:true,html:I.check+saveLabel,onclick:()=>onSave(false)}));}
 function whereBlock(m,t){
   const modeBtn=(k,i)=>h('button',{type:'button','aria-pressed':String(t.mode===k),html:I[i]+k,onclick:()=>{upd({mode:t.mode===k?'':k},true);}});
   const loc=field(h('input',{class:'inp',id:'dr-loc',list:'places',value:t.location,placeholder:t.mode==='Online'?'Platform, e.g. Zoom or Teams':'Venue or address, e.g. BAPS Mandir Rouse Hill','aria-label':t.mode==='Online'?'Platform':'Location'}),'location',{trim:true});
@@ -980,6 +1110,7 @@ function infoEditor(m){const inf=D.draft.info||(D.draft.info={level:m.level,freq
     h('div',{class:'ei-row'},h('label',{for:'ei-sw',text:"Swami's presence"}),sw),
     h('p',{class:'hint',text:'When you click Save changes, you can choose to update this meeting only or all later meetings too.'}));}
 function renderDrawer(focusId){
+  if(D&&D.isAction)return renderActionDrawer(focusId);
   if(D&&D.isNew)return renderNew(focusId);
   const m=BYID[ui.drawer];if(!m||!D)return;const t=D.draft,d=document.getElementById('drawer');d.setAttribute('data-dept',m.dept);
   const pr=t.attendees.filter(a=>a.att==='Present').length,dn=t.actions.filter(a=>a.status==='Done').length,od=t.actions.filter(overdue).length;
@@ -1132,8 +1263,8 @@ function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes
   sorted().forEach(m=>{const t=track(m),by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join('; ');
     rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,t.completedOn,derived(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
   csv(rows,'BAPS_Meeting_Register_'+TODAY_ISO+'.csv','Meeting register downloaded');}
-function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Progress','Overdue?','Done On','Added On']];
-  sorted().forEach(m=>track(m).actions.forEach(a=>rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status,overdue(a)?'Yes':'',a.doneOn||'',a.created||''])));
+function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Status','Priority','% Complete','Overdue?','Done On','Added On','Latest Update','Latest Update By','Latest Update On']];
+  sorted().forEach(m=>track(m).actions.forEach(a=>{const u=lastUpd(a);rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status==='Open'?'Not started':a.status,a.priority||'Medium',a.status==='Done'?100:(a.progress||0),overdue(a)?'Yes':'',a.doneOn||'',a.created||'',u?u.text:'',u?u.by:'',u?u.at.slice(0,10):'']);}));
   if(rows.length===1){toast('No action items recorded yet');return;}csv(rows,'BAPS_Action_Items_'+TODAY_ISO+'.csv','Action items downloaded');}
 function dlAttend(){const rows=[['Meeting Date','Department','Seva Level','Name','Attendance']];sorted().forEach(m=>track(m).attendees.forEach(a=>rows.push([eff(m),m.dept,m.level,a.name,a.att])));
   if(rows.length===1){toast('No attendance recorded yet');return;}csv(rows,'BAPS_Attendance_'+TODAY_ISO+'.csv','Attendance downloaded');}
@@ -1169,7 +1300,7 @@ let qt;document.getElementById('q').addEventListener('input',e=>{clearTimeout(qt
 addEventListener('scroll',()=>{hideTip();},{passive:true});
 addEventListener('resize',()=>{closePop();hideTip();});
 function liveRefresh(){clearTimeout(liveRefresh._t);liveRefresh._t=setTimeout(()=>{
-  if(D&&!D.isNew&&BYID[D.id]){const now=(store[D.id]||{}).updated||'';if(now!==D.base){D.base=now;if(D.dirty){D.remote=true;const a=document.activeElement;const typing=a&&document.getElementById('drawer').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!typing)renderDrawer();}else{D.draft=clone(track(BYID[D.id]));const a=document.activeElement;const typing=a&&document.getElementById('drawer').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!typing)renderDrawer();}}}
+  if(D&&!D.isNew&&!D.isAction&&BYID[D.id]){const now=(store[D.id]||{}).updated||'';if(now!==D.base){D.base=now;if(D.dirty){D.remote=true;const a=document.activeElement;const typing=a&&document.getElementById('drawer').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!typing)renderDrawer();}else{D.draft=clone(track(BYID[D.id]));const a=document.activeElement;const typing=a&&document.getElementById('drawer').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!typing)renderDrawer();}}}
   softRefresh();},150);}
 async function loadAll(){const all={};let from=0;
   for(;;){const r=await SB.from('meetings').select('id,data').range(from,from+999);if(r.error)throw r.error;r.data.forEach(x=>all[x.id]=x.data);if(r.data.length<1000)break;from+=1000;}
