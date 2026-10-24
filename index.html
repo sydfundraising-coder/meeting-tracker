@@ -537,6 +537,37 @@ button.more{all:unset;cursor:pointer;font-size:11.5px;color:var(--muted);padding
 .tl-bar{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2);min-width:120px}
 .tl-bar i{display:block;height:100%}
 @media (max-width:560px){.sev{display:none}.st-cell .dots{display:flex}.tl-bcol{display:none}}
+.ax-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.ax-sum{margin:14px 2px 0;font-size:14px;color:var(--muted)}
+.ax-sum .late{color:var(--alert);font-weight:700}.ax-sum .ok{color:var(--done);font-weight:700}
+.ax-group{margin-top:22px}
+.ax-group h3{font-size:15px;display:flex;gap:8px;align-items:center;margin:0 0 8px 4px}
+.ax-group h3 span{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--muted);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:1px 8px;border-radius:10px}
+.ax-group.late h3{color:var(--alert)}.ax-group.late h3 span{background:var(--alert-soft);color:var(--alert);box-shadow:none}
+.ax-list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-1)}
+.ax{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 18px 14px 14px;border-top:1px solid var(--line);cursor:pointer}
+.ax:first-child{border-top:0}
+.ax:hover{background:var(--surface-2)}
+.ax:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.ax-chk{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--line-2);display:grid;place-items:center;color:transparent;justify-self:center}
+.ax-chk:hover{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
+.ax-chk[aria-pressed="true"]{background:var(--done);color:#fff;box-shadow:none}
+.ax-chk svg{width:15px;height:15px}
+.ax-chk:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.ax-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.ax-t{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:15px;font-weight:600}
+.ax.done .ax-t>span:first-child{text-decoration:line-through;color:var(--muted)}
+.ax-hi{font-size:11.5px;font-weight:700;color:var(--alert)}
+.ax-hi::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--alert);margin-right:5px;vertical-align:1px}
+.ax-ip{font-size:11.5px;font-weight:700;color:var(--moved);background:var(--moved-soft);padding:1px 7px;border-radius:6px}
+.ax-m{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted)}
+.ax-m>span{display:inline-flex;gap:6px;align-items:center;min-width:0}
+.ax-who{color:var(--fg);font-weight:600}
+.ax-who .av{width:20px;height:20px;font-size:9px}
+.ax-u{font-style:italic;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block!important}
+.ax-due{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+.ax-due.late{color:var(--alert);font-weight:700}.ax-due.soon{color:var(--moved);font-weight:700}
+@media (max-width:600px){.ax{grid-template-columns:28px minmax(0,1fr);padding:12px}.ax-due{grid-column:2}.ax-u{display:none!important}}
 .dr-acts{margin-left:auto;display:flex;gap:6px;align-items:flex-start;margin-top:-4px}
 .dr-top .x{margin:0}
 .btn.on{background:var(--surface-2);border-color:var(--fg)}
@@ -1005,31 +1036,38 @@ const actTouched=a=>{const u=lastUpd(a);return u?u.at:(a.doneOn||a.created||'');
 const AF={all:['All',()=>true],open:['Not started',x=>x.a.status==='Open'],prog:['In progress',x=>x.a.status==='In progress'],late:['Overdue',x=>overdue(x.a)],week:['Due in 7 days',x=>dueSoon(x.a)],done:['Done',x=>x.a.status==='Done']};
 function allActions(){return base().flatMap(m=>track(m).actions.map(a=>({m,a})));}
 function renderActions(v){
-  const all=allActions();ui.af=ui.af||'all';ui.av=ui.av||'list';ui.asort=ui.asort||'due';
+  const all=allActions();ui.atab=ui.atab||'todo';
   const owners=[...new Set(all.map(x=>x.a.owner).filter(Boolean))].sort();
-  const tot=all.length,dn=all.filter(x=>x.a.status==='Done').length;
-  const sel=(id,label,val,opts,on)=>h('select',{class:'select',id,'aria-label':label,onchange:e=>on(e.target.value)},opts.map(([v2,l])=>{const o=h('option',{value:v2,text:l});if(v2===val)o.selected=true;return o;}));
-  v.append(h('div',{class:'at-stats'},Object.entries(AF).map(([k,[l,f]])=>{const n=all.filter(f).length;
-    return h('button',{type:'button',class:'at-stat'+(ui.af===k?' on':'')+(k==='late'&&n?' alert':''),'aria-pressed':String(ui.af===k),onclick:()=>{ui.af=k;render();}},h('b',{text:n}),h('span',{text:l}));})),
-    tot?h('div',{class:'at-prog'},h('span',{text:`${Math.round(dn/tot*100)}% complete`}),h('div',{class:'bar'},h('i',{style:`width:${dn/tot*100}%;background:var(--done)`}),h('i',{style:`width:${all.filter(x=>x.a.status==='In progress').length/tot*100}%;background:var(--moved)`})),h('small',{text:`${dn} of ${plural(tot,'action')} done`})):null,
-    h('div',{class:'list-head at-tools'},
-      h('div',{class:'seg',role:'group','aria-label':'Layout'},[['list','List'],['board','Board']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(ui.av===k),text:l,onclick:()=>{ui.av=k;render();}}))),
-      sel('af-owner','Owner',ui.owner,[['','Everyone'],...owners.map(o=>[o,o])],x=>{ui.owner=x;render();}),
-      sel('af-pri','Priority',ui.apri||'',[['','Any priority'],...PRI.map(p=>[p,p+' priority'])],x=>{ui.apri=x;render();}),
-      sel('af-sort','Sort',ui.asort,[['due','Sort: due date'],['pri','Sort: priority'],['upd','Sort: recently updated'],['mtg','Sort: meeting date']],x=>{ui.asort=x;render();}),
-      h('span',{style:'flex:1'}),
-      h('button',{type:'button',class:'btn primary',html:I.plus+'Add action',onclick:()=>openNewAction()})));
-  if(!tot){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},ic('task'),h('b',{text:'No action items yet'}),'Click Add action, or open a meeting and use its Action items tab to record what was agreed.'));return;}
-  let items=all.filter(AF[ui.af][1]).filter(x=>(!ui.owner||x.a.owner===ui.owner)&&(!ui.apri||(x.a.priority||'Medium')===ui.apri));
-  const S={due:(p,q)=>(p.a.status==='Done')-(q.a.status==='Done')||(p.a.due||'9999').localeCompare(q.a.due||'9999'),pri:(p,q)=>priRank(p.a.priority)-priRank(q.a.priority)||(p.a.due||'9999').localeCompare(q.a.due||'9999'),
-    upd:(p,q)=>actTouched(q.a).localeCompare(actTouched(p.a)),mtg:(p,q)=>eff(q.m).localeCompare(eff(p.m))};
-  items.sort(S[ui.asort]);
-  if(!items.length){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},h('b',{text:'No actions match'}),'Try another filter.'));return;}
-  if(ui.av==='board'){const cols=[['Open','var(--fg)','Not started'],['In progress','var(--moved)','In progress'],['Done','var(--done)','Done']];
-    v.append(h('div',{class:'board'},cols.map(([s,c,l])=>{const xs=items.filter(x=>x.a.status===s);
-      return h('section',{class:'col','aria-label':l},h('div',{class:'col-h'},h('i',{style:`--c:${c}`}),h('h3',{text:l}),h('span',{text:xs.length})),xs.length?xs.map(actCard):h('div',{class:'col-empty',text:'Nothing here.'}));})));return;}
-  v.append(h('div',{class:'atable'},h('div',{class:'at-row at-head','aria-hidden':'true'},['Action','Owner','Due','Priority','Progress','Status'].map(x=>h('span',{text:x}))),items.map(actRow)));
+  const mine=all.filter(x=>!ui.owner||x.a.owner===ui.owner);
+  const todo=mine.filter(x=>x.a.status!=='Done'),done=mine.filter(x=>x.a.status==='Done'),late=todo.filter(x=>overdue(x.a));
+  const ow=h('select',{class:'select',id:'af-owner','aria-label':'Owner',onchange:e=>{ui.owner=e.target.value;render();}},[['','Everyone'],...owners.map(o=>[o,o])].map(([v2,l])=>{const o=h('option',{value:v2,text:l});if(v2===ui.owner)o.selected=true;return o;}));
+  v.append(h('div',{class:'ax-bar'},
+    h('div',{class:'seg',role:'group','aria-label':'Show'},[['todo','To do',todo.length],['done','Done',done.length],['all','All',mine.length]].map(([k,l,n])=>h('button',{type:'button','aria-pressed':String(ui.atab===k),onclick:()=>{ui.atab=k;render();}},l,h('span',{class:'n',text:n})))),
+    ow,h('span',{style:'flex:1'}),h('button',{type:'button',class:'btn primary',html:I.plus+'Add action',onclick:()=>openNewAction()})));
+  if(!all.length){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},ic('task'),h('b',{text:'No action items yet'}),'Click Add action, or open a meeting and use its Action items tab.'));return;}
+  if(todo.length||done.length)v.append(h('p',{class:'ax-sum'},
+    late.length?h('span',{class:'late',text:`${late.length} overdue`}):h('span',{class:'ok',text:'Nothing overdue'}),
+    h('span',{text:` · ${todo.length} to do · ${done.length} done`+(ui.owner?` for ${ui.owner}`:'')})));
+  const wk=iso(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+7));
+  const byDue=(p,q)=>(p.a.due||'9999').localeCompare(q.a.due||'9999')||priRank(p.a.priority)-priRank(q.a.priority);
+  const groups=[];
+  if(ui.atab!=='done'){const T=todo.slice().sort(byDue);
+    groups.push(['Overdue','late',T.filter(x=>overdue(x.a))],['Due in the next 7 days','soon',T.filter(x=>x.a.due&&x.a.due>=TODAY_ISO&&x.a.due<=wk)],
+      ['Due later','',T.filter(x=>x.a.due&&x.a.due>wk)],['No due date','',T.filter(x=>!x.a.due)]);}
+  if(ui.atab!=='todo')groups.push(['Done','done',done.slice().sort((p,q)=>(q.a.doneOn||'').localeCompare(p.a.doneOn||''))]);
+  const shown=groups.filter(g=>g[2].length);
+  if(!shown.length){v.append(h('div',{class:'panel empty',style:'margin-top:16px'},h('b',{text:ui.atab==='todo'?'All done':'Nothing here yet'}),ui.atab==='todo'?'Every action is complete.':'Completed actions will appear here.'));return;}
+  shown.forEach(([title,cls,xs])=>v.append(h('section',{class:'ax-group '+cls},h('h3',{},title,h('span',{text:xs.length})),h('div',{class:'ax-list'},xs.map(axRow)))));
 }
+function axRow(x){const{m,a}=x,u=lastUpd(a),dn=a.status==='Done';
+  return h('div',{class:'ax'+(dn?' done':'')+(overdue(a)?' late':''),role:'button',tabindex:'0','data-dept':m.dept,'aria-label':'Open action: '+a.text,
+      onclick:()=>openAction(m.id,a.id),onkeydown:e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAction(m.id,a.id);}}},
+    h('button',{type:'button',class:'ax-chk','aria-pressed':String(dn),'aria-label':dn?'Mark as not done':'Mark as done',html:I.check,onclick:e=>{e.stopPropagation();moveAct(m,a,dn?'Open':'Done');}}),
+    h('div',{class:'ax-main'},
+      h('div',{class:'ax-t'},h('span',{text:a.text}),a.priority==='High'&&!dn?h('span',{class:'ax-hi',text:'High priority'}):null,a.status==='In progress'?h('span',{class:'ax-ip',text:'In progress'+(a.progress?` · ${a.progress}%`:'')}):null),
+      h('div',{class:'ax-m'},h('span',{class:'ax-who'},a.owner?av(a.owner):null,a.owner||'No owner'),h('span',{},h('i',{class:'dot'}),`${m.level} · ${short(eff(m))}`),
+        u?h('span',{class:'ax-u',text:'“'+u.text+'”'}):null)),
+    dn?h('span',{class:'ax-due',text:a.doneOn?'Done '+short(a.doneOn):'Done'}):h('span',{class:'ax-due'+(overdue(a)?' late':dueSoon(a)?' soon':''),text:a.due?(overdue(a)?'Overdue · ':'')+short(a.due):'No date'}));}
 function priTag(a){const p=a.priority||'Medium';return h('span',{class:'pri pri-'+p,text:p});}
 function progBar(a){const p=a.status==='Done'?100:(a.progress||0);return h('span',{class:'at-pb',title:p+'% complete'},h('i',{style:`width:${p}%`}),h('em',{text:p+'%'}));}
 function stPill(a){return h('span',{class:'pill '+(overdue(a)?'p-need':a.status==='Done'?'p-Completed':a.status==='In progress'?'p-Postponed':'p-Scheduled'),text:overdue(a)?'Overdue':a.status==='Open'?'Not started':a.status});}
