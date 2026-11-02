@@ -378,6 +378,12 @@ body.sheet-open .toast{bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .quick .btn{padding:0 6px;gap:5px;font-size:13.5px;min-width:0;white-space:nowrap}
 .quick .btn svg{width:16px;height:16px}
 @media (min-width:700px){.quick{padding-left:90px;max-width:520px}}
+.backbtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:2px;height:44px;padding:0 10px 0 2px;margin-left:-4px;border-radius:12px;font-weight:600;font-size:15.5px;color:var(--accent-ink);flex:none;align-self:flex-start}
+.backbtn svg{width:24px;height:24px}
+.backbtn:hover{background:var(--surface-2)}
+.backbtn:focus-visible{outline:2px solid var(--accent)}
+.mrow .why{font-size:12.5px;color:var(--muted);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lbl small{font-weight:500;color:var(--muted);margin-left:6px}
 
 #sidenav{display:contents}
 .top .sync{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
@@ -480,7 +486,7 @@ function persist(id,rec){
   wq=wq.then(()=>go().catch(()=>new Promise(r=>setTimeout(r,800)).then(go)))
     .then(()=>{pending--;setSync('ok');})
     .catch(e=>{pending--;setSync('err');toast('Could not save. Check your internet connection and try again',{force:true});console.error(e);});}
-const DEF=()=>({status:'Scheduled',postponedTo:'',completedOn:'',notes:'',agenda:'',attendees:[],actions:[],mode:'',location:'',link:'',start:'',end:''});
+const DEF=()=>({status:'Scheduled',postponedTo:'',completedOn:'',reason:'',notes:'',agenda:'',attendees:[],actions:[],mode:'',location:'',link:'',start:'',end:''});
 function track(m){return {...DEF(),start:m.start||'',end:m.end||'',...(store[m.id]||m.seed||{})};}
 let blockT=0;
 function setTrack(m,patch){
@@ -532,7 +538,7 @@ function refreshLists(){$('#people').replaceChildren(...people().map(n=>h('optio
 /* ================= filters ================= */
 function matchBase(m){const t=track(m);
   if(ui.dept&&m.dept!==ui.dept)return false;if(ui.swami&&m.swami!==ui.swami)return false;
-  if(ui.q){const hay=[m.dept,m.level,m.freq,t.notes,t.agenda,t.location,...t.attendees.map(a=>a.name),...t.actions.map(a=>a.text+' '+a.owner)].join(' ').toLowerCase();if(!hay.includes(ui.q.toLowerCase()))return false;}
+  if(ui.q){const hay=[m.dept,m.level,m.freq,t.notes,t.agenda,t.location,t.reason||'',...t.attendees.map(a=>a.name),...t.actions.map(a=>a.text+' '+a.owner)].join(' ').toLowerCase();if(!hay.includes(ui.q.toLowerCase()))return false;}
   return true;}
 const base=()=>M.filter(matchBase);
 const byDate=(a,b)=>eff(a).localeCompare(eff(b))||(track(a).start||'99').localeCompare(track(b).start||'99')||a.dept.localeCompare(b.dept);
@@ -567,14 +573,15 @@ function mRow(m,showDate){const t=track(m),k=cat(m);const wt=whereText(t);
     h('div',{class:'tm'},showDate?fmt(parse(eff(m)),{day:'numeric',month:'short'}):(t.start?fmtT(t.start):'All day'),
       h('small',{text:showDate?(t.start?fmtT(t.start):fmt(parse(eff(m)),{weekday:'short'})):(t.end&&t.start?'to '+fmtT(t.end):'')})),
     h('div',{class:'mm'},h('div',{class:'nm'},h('span',{text:m.level}),m.swami==='Yes'?h('span',{class:'tag',text:'Swami'}):null,m.tentative?h('span',{class:'tag grey',text:'Tentative'}):null),
-      h('div',{class:'sb',text:[m.dept,wt,t.status==='Postponed'&&t.postponedTo?'moved from '+short(m.date):''].filter(Boolean).join(' · ')})),
+      h('div',{class:'sb',text:[m.dept,wt,t.status==='Postponed'&&t.postponedTo?'moved from '+short(m.date):''].filter(Boolean).join(' · ')}),
+      (t.status==='Cancelled'||t.status==='Postponed')&&t.reason?h('div',{class:'why',text:(t.status==='Cancelled'?'Cancelled: ':'Moved: ')+t.reason}):null),
     stTag(m));}
 function quickRow(m){return h('div',{class:'qwrap'},mRow(m,true),h('div',{class:'quick'},
   h('button',{type:'button',class:'btn ok',html:I.check+'Completed',onclick:()=>quickStatus(m,'Completed')}),
   h('button',{type:'button',class:'btn mv',html:I.move+'Moved',onclick:()=>reschedSheet(m)}),
-  h('button',{type:'button',class:'btn no',html:I.x+'Cancelled',onclick:()=>quickStatus(m,'Cancelled')})));}
-function quickStatus(m,status,extra){const prev=track(m);const keep={status:prev.status,postponedTo:prev.postponedTo,completedOn:prev.completedOn};
-  const p={status,postponedTo:'',...(extra||{})};if(status==='Completed'&&!p.completedOn)p.completedOn=eff(m)<=TODAY_ISO?eff(m):TODAY_ISO;
+  h('button',{type:'button',class:'btn no',html:I.x+'Cancelled',onclick:()=>reasonSheet(m)})));}
+function quickStatus(m,status,extra){const prev=track(m);const keep={status:prev.status,postponedTo:prev.postponedTo,completedOn:prev.completedOn,reason:prev.reason||''};
+  const p={status,postponedTo:'',reason:'',...(extra||{})};if(status==='Completed'&&!p.completedOn)p.completedOn=eff(m)<=TODAY_ISO?eff(m):TODAY_ISO;
   if(setTrack(m,p)===false)return false;
   toast(status==='Postponed'?'Moved to '+short(p.postponedTo):'Marked '+SL[status].toLowerCase(),{force:true,undo:()=>{if(setTrack(m,keep)!==false){renderView(true);repaintSheet();}}});renderView(true);return true;}
 function dayGroups(list,showToday){const out=[];let cur=null;list.forEach(m=>{const d=eff(m);if(!cur||cur.d!==d){cur={d,ms:[]};out.push(cur);}cur.ms.push(m);});
@@ -703,7 +710,12 @@ VIEW_FN.more=v=>{
 
 /* ================= sheet system ================= */
 const SHEETS=[];
-function openSheet(s){SHEETS.push(s);document.body.classList.add('sheet-open');paint(true);}
+let skipPop=0;
+function openSheet(s){SHEETS.push(s);document.getElementById('toast').hidden=true;try{history.pushState({sh:SHEETS.length},'');}catch(e){}document.body.classList.add('sheet-open');paint(true);}
+function histBack(n){if(n>0){skipPop++;try{history.go(-n);}catch(e){skipPop--;}}}
+window.addEventListener('popstate',()=>{if(skipPop){skipPop--;return;}const s=topSheet();if(!s)return;
+  if(s.dirty){try{history.pushState({sh:SHEETS.length},'');}catch(e){}s.confirm=true;paint(false);return;}
+  SHEETS.pop();if(s.onClose)s.onClose();if(topSheet()){const t=topSheet();if(t.refresh)t.refresh();paint(false);}else{paint();renderView(true);}});
 function topSheet(){return SHEETS[SHEETS.length-1];}
 function paint(anim,focusId){const el=$('#sheet'),sc=$('#scrim'),s=topSheet();
   if(!s){el.classList.remove('on');sc.classList.remove('on');document.body.classList.remove('sheet-open');document.body.style.overflow='';setTimeout(()=>{if(!topSheet()){el.hidden=true;sc.hidden=true;el.replaceChildren();}},260);return;}
@@ -719,8 +731,8 @@ function mkSheet(o){return{sid:++sidN,dirty:false,...o};}
 function repaintSheet(focusId){const s=topSheet();if(!s)return;if(s.refresh)s.refresh();paint(false,focusId);}
 function closeSheet(force){const s=topSheet();if(!s)return;
   if(!force&&s.dirty){s.confirm=true;paint(false);return;}
-  SHEETS.pop();if(s.onClose)s.onClose();if(topSheet()){const t=topSheet();if(t.refresh)t.refresh();paint(false);}else{paint();renderView(true);}}
-function head(o){return h('div',{class:'sh-head'},h('button',{type:'button',class:'iconbtn','aria-label':o.small?'Close':'Back',html:o.small?I.x:I.back,onclick:()=>closeSheet()}),
+  SHEETS.pop();histBack(1);if(s.onClose)s.onClose();if(topSheet()){const t=topSheet();if(t.refresh)t.refresh();paint(false);}else{paint();renderView(true);}}
+function head(o){return h('div',{class:'sh-head'},o.small?h('button',{type:'button',class:'iconbtn','aria-label':'Close',html:I.x,onclick:()=>closeSheet()}):h('button',{type:'button',class:'backbtn','aria-label':'Back',html:I.back+'<span>Back</span>',onclick:()=>closeSheet()}),
   h('div',{class:'sh-ttl'},o.k?h('div',{class:'k'},o.dot?h('i',{class:'dot'}):null,o.k):null,h('h2',{id:'sh-title',text:o.t}),o.w?h('div',{class:'w',text:o.w}):null),o.right||null);}
 function markDirty(s){if(s.dirty)return;s.dirty=true;const f=$('#sheet .sh-foot');if(f&&s.footer){f.replaceWith(s.footer());}else if(s.footer){$('#sheet').append(s.footer());}}
 function saveFoot(s,label){
@@ -735,7 +747,7 @@ function bind(el,s,obj,key,after){const f=()=>{obj[key]=el.value;markDirty(s);if
 function opt(label,on,fn,extra){return h('button',{type:'button',class:'opt',role:'radio','aria-checked':String(!!on),onclick:fn},extra||null,h('span',{text:label}),h('span',{class:'rad'}));}
 
 /* ---------- meeting sheet ---------- */
-const OWN_FIELDS=['status','postponedTo','completedOn','agenda','notes','attendees','actions'];
+const OWN_FIELDS=['status','postponedTo','completedOn','reason','agenda','notes','attendees','actions'];
 function meetingSheet(id,open){const m=BYID[id];if(!m)return;
   const s=mkSheet({kind:'meeting',id,dept:m.dept,open:open||null,draft:clone(track(m)),base:(store[id]||{}).updated||''});
   s.refresh=()=>{if(!s.dirty){const mm=BYID[s.id];if(mm)s.draft=clone(track(mm));}};
@@ -750,11 +762,12 @@ function meetingSheet(id,open){const m=BYID[id];if(!m)return;
 function renderMeeting(s){const m=BYID[s.id],t=s.draft,cur=track(m);const d=t.status==='Postponed'&&t.postponedTo&&+t.postponedTo.slice(0,4)>=2000?t.postponedTo:m.date;
   const past=m.date<=TODAY_ISO;
   const SB=[['Scheduled','Scheduled','clock','var(--sched)'],['Completed','Completed','check','var(--done)'],['Postponed','Moved','move','var(--moved)'],['Cancelled','Cancelled','x','var(--cancel)']];
-  const setSt=st=>{t.status=st;if(st==='Completed'&&!t.completedOn)t.completedOn=d<=TODAY_ISO?d:TODAY_ISO;if(st!=='Postponed')t.postponedTo='';if(st!=='Completed')t.completedOn='';markDirty(s);paint(false,st==='Postponed'?'m-pt':null);};
+  const setSt=st=>{t.status=st;if(st==='Completed'&&!t.completedOn)t.completedOn=d<=TODAY_ISO?d:TODAY_ISO;if(st!=='Postponed')t.postponedTo='';if(st!=='Completed')t.completedOn='';if(st!=='Postponed'&&st!=='Cancelled')t.reason='';markDirty(s);paint(false,st==='Postponed'?'m-pt':st==='Cancelled'?'m-rs':null);};
   const body=h('div',{class:'sh-body'},
     h('div',{class:'lbl',style:'margin-top:0'},past?'Did this meeting happen?':'Status'),
     h('div',{class:'stgrid',role:'group','aria-label':'Meeting status'},SB.map(([k,l,i,c])=>h('button',{type:'button',class:'stb','aria-pressed':String(t.status===k),style:`--c:${c}`,onclick:()=>setSt(k)},h('i',{html:I[i]}),l))),
     t.status==='Postponed'?[h('label',{class:'lbl',for:'m-pt',text:'New date'}),bind(h('input',{type:'date',id:'m-pt',value:t.postponedTo,min:'2026-01-01',max:'2030-12-31'}),s,t,'postponedTo')]:null,
+    t.status==='Postponed'||t.status==='Cancelled'?[h('label',{class:'lbl',for:'m-rs'},t.status==='Cancelled'?'Why was it cancelled?':'Why was it moved?',h('small',{text:'shown to everyone'})),bind(h('textarea',{class:'inp',id:'m-rs',rows:'2',style:'min-height:64px',placeholder:t.status==='Cancelled'?'e.g. Swami travelling, clashes with shibir':'e.g. Key people unavailable',value:t.reason||''}),s,t,'reason')]:null,
     t.status==='Completed'?[h('label',{class:'lbl',for:'m-co',text:'Held on'}),bind(h('input',{type:'date',id:'m-co',value:t.completedOn,min:'2026-01-01',max:'2030-12-31'}),s,t,'completedOn')]:null,
     h('div',{class:'info'},
       h('div',{class:'irow'},h('span',{html:I.clock}),h('span',{class:cur.start?'':'mt',text:cur.start?timeText(cur):'No time set'}),null),
@@ -805,18 +818,25 @@ function meetingMenu(s,m){const it=(i,l,fn)=>h('button',{type:'button',class:'op
     it('ext','Add to Google Calendar',()=>window.open(gLink(m),'_blank','noopener')),
     it('ext','Add to Outlook',()=>window.open(oLink(m),'_blank','noopener')),
     it('ics','Download calendar file (.ics)',()=>dlIcs([m],fileSafe(m.dept+'_'+m.level+'_'+eff(m))+'.ics',title(m))),
-    m.custom?it('trash','Delete this meeting',()=>confirmSheet('Delete this meeting?','It is removed for everyone. This cannot be undone.','Delete',()=>{const r=clone(track(m));r.custom={...r.custom,deleted:true};if(setTrack(m,r)!==false){rebuildM();while(SHEETS.length)SHEETS.pop();paint();renderView(true);toast('Meeting deleted',true);}})):null))]});
+    m.custom?it('trash','Delete this meeting',()=>confirmSheet('Delete this meeting?','It is removed for everyone. This cannot be undone.','Delete',()=>{const r=clone(track(m));r.custom={...r.custom,deleted:true};if(setTrack(m,r)!==false){rebuildM();histBack(SHEETS.length);while(SHEETS.length)SHEETS.pop();paint();renderView(true);toast('Meeting deleted',true);}})):null))]});
   openSheet(ms);}
 function confirmSheet(t,msg,btn,fn){const c=mkSheet({small:true,render:()=>[head({t,small:1}),h('div',{class:'sh-body'},h('p',{style:'margin:0;color:var(--muted)',text:msg})),
   h('div',{class:'sh-foot'},h('button',{type:'button',class:'btn',text:'Cancel',onclick:()=>closeSheet(true)}),h('button',{type:'button',class:'btn primary',text:btn,onclick:()=>{closeSheet(true);fn();}}))]});openSheet(c);}
 
 /* ---------- reschedule quick sheet ---------- */
-function reschedSheet(m){const s=mkSheet({small:true,dept:m.dept,draft:{d:''}});
+function reschedSheet(m){const s=mkSheet({small:true,dept:m.dept,draft:{d:'',r:''}});
   s.render=()=>[head({k:m.dept,dot:1,t:'Move '+m.level,w:'Originally '+dshort(m.date),small:1}),h('div',{class:'sh-body'},h('label',{class:'lbl',for:'rs-d',style:'margin-top:0',text:'New date'}),
-    h('input',{type:'date',id:'rs-d',min:'2026-01-01',max:'2030-12-31',value:s.draft.d,oninput:e=>s.draft.d=e.target.value,onchange:e=>s.draft.d=e.target.value})),
+    h('input',{type:'date',id:'rs-d',min:'2026-01-01',max:'2030-12-31',value:s.draft.d,oninput:e=>s.draft.d=e.target.value,onchange:e=>s.draft.d=e.target.value}),
+    h('label',{class:'lbl',for:'rs-r',text:'Reason'}),h('textarea',{class:'inp',id:'rs-r',rows:'2',style:'min-height:64px',placeholder:'Why is it being moved?',value:s.draft.r,oninput:e=>s.draft.r=e.target.value})),
     h('div',{class:'sh-foot'},h('button',{type:'button',class:'btn',text:'Cancel',onclick:()=>closeSheet(true)}),h('button',{type:'button',class:'btn primary',html:I.check+'Move meeting',onclick:()=>{const d=s.draft.d;
-      if(!d||+d.slice(0,4)<2000){toast('Choose the new date',true);return;}closeSheet(true);quickStatus(m,'Postponed',{postponedTo:d});}}))];
+      if(!d||+d.slice(0,4)<2000){toast('Choose the new date',true);return;}closeSheet(true);quickStatus(m,'Postponed',{postponedTo:d,reason:(s.draft.r||'').trim()});}}))];
   openSheet(s);setTimeout(()=>$('#rs-d')?.focus(),300);}
+
+function reasonSheet(m){const s=mkSheet({small:true,dept:m.dept,draft:{r:''}});
+  s.render=()=>[head({k:m.dept,dot:1,t:'Cancel '+m.level,w:dshort(eff(m)),small:1}),h('div',{class:'sh-body'},h('label',{class:'lbl',for:'cx-r',style:'margin-top:0',text:'Why was it cancelled?'}),
+    h('textarea',{class:'inp',id:'cx-r',rows:'3',style:'min-height:84px',placeholder:'e.g. Swami travelling, clashes with shibir',value:s.draft.r,oninput:e=>s.draft.r=e.target.value})),
+    h('div',{class:'sh-foot'},h('button',{type:'button',class:'btn',text:'Go back',onclick:()=>closeSheet(true)}),h('button',{type:'button',class:'btn primary',html:I.x+'Mark cancelled',onclick:()=>{closeSheet(true);quickStatus(m,'Cancelled',{reason:(s.draft.r||'').trim()});}}))];
+  openSheet(s);setTimeout(()=>$('#cx-r')?.focus(),300);}
 
 /* ---------- edit details (time, place, name) ---------- */
 const FREQS=['Weekly','Fortnightly','Twice monthly','Monthly','Bi-monthly','Quarterly','One-off'];
@@ -871,7 +891,7 @@ function actionSheet(mid,aid,isNew){const m=BYID[mid];let a=m?track(m).actions.f
       !s.isNew?[h('div',{class:'lbl'},'Updates',h('small',{text:'shared straight away'})),updBox(s),
         ups.length?h('ul',{class:'upd'},ups.map(u=>h('li',{},av(u.by||'?'),h('div',{},h('div',{class:'um',text:`${u.by||'Someone'} · ${fmt(new Date(u.at),{day:'numeric',month:'short'})}`}),h('div',{class:'ut',text:u.text}))))):null,
         h('button',{type:'button',class:'btn ghost danger block',style:'margin-top:22px',html:I.trash+'Delete action',onclick:()=>confirmSheet('Delete this action?','It is removed for everyone.','Delete',()=>{const m2=BYID[s.id];
-          if(setTrack(m2,{actions:track(m2).actions.filter(x=>x.id!==s.aid)})!==false){s.dirty=false;SHEETS.splice(SHEETS.indexOf(s),1);paint();renderView(true);toast('Action deleted',true);}})})]:null),
+          if(setTrack(m2,{actions:track(m2).actions.filter(x=>x.id!==s.aid)})!==false){s.dirty=false;SHEETS.splice(SHEETS.indexOf(s),1);histBack(1);paint();renderView(true);toast('Action deleted',true);}})})]:null),
       s.footer()];};
   openSheet(s);if(isNew)setTimeout(()=>$('#a-tx')?.focus(),300);}
 function updBox(s){const ta=h('textarea',{class:'inp',id:'a-up',rows:'2',style:'min-height:64px',placeholder:'What has happened since last time?'});
@@ -955,13 +975,13 @@ function reportsSheet(){const s=mkSheet({});
 
 /* ================= files ================= */
 function details(m){const t=track(m);let s=`Seva level: ${m.level}\nFrequency: ${m.freq}\nSwami's presence required: ${m.swami}`;if(t.mode)s+=`\nMeeting type: ${t.mode}`;if(t.link)s+=`\nJoin: ${t.link}`;
-  if(t.status==='Postponed'&&t.postponedTo)s+=`\nRescheduled from ${short(m.date)}`;if(t.agenda)s+=`\n\nAgenda:\n${t.agenda}`;return s;}
+  if(t.status==='Postponed'&&t.postponedTo)s+=`\nRescheduled from ${short(m.date)}`;if(t.reason&&(t.status==='Postponed'||t.status==='Cancelled'))s+=`\nReason: ${t.reason}`;if(t.agenda)s+=`\n\nAgenda:\n${t.agenda}`;return s;}
 function calLoc(m){const t=track(m);return t.mode==='Online'?(t.link||t.location||'Online'):(t.location||'');}
 function gDates(m){const t=track(m),d=parse(eff(m));if(t.start){const hm=s=>s.replace(':','')+'00';return ymd(d)+'T'+hm(t.start)+'/'+ymd(d)+'T'+hm(endOf(t));}const e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return ymd(d)+'/'+ymd(e);}
 function gLink(m){return'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title(m))+'&dates='+gDates(m)+'&details='+encodeURIComponent(details(m))+'&location='+encodeURIComponent(calLoc(m))+'&ctz=Australia/Sydney';}
 function oLink(m){const t=track(m),d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);const tm=!!t.start;return'https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&allday='+(tm?'false':'true')+'&subject='+encodeURIComponent(title(m))+'&startdt='+(tm?iso(d)+'T'+t.start+':00':iso(d))+'&enddt='+(tm?iso(d)+'T'+endOf(t)+':00':iso(e))+'&location='+encodeURIComponent(calLoc(m))+'&body='+encodeURIComponent(details(m).replace(/\n/g,'<br>'));}
 function minutes(m){const t=track(m),L=[];const by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join(', ')||'—';
-  L.push(title(m).toUpperCase(),long(eff(m))+(t.start?'  ·  '+timeText(t):'')+'  ·  '+SL[t.status],'Where: '+(whereText(t)||'—')+(t.mode==='Online'&&t.link?'  ('+t.link+')':''),'','ATTENDANCE','Present: '+by('Present'),'Apologies: '+by('Apology'),'Absent: '+by('Absent'),'','AGENDA',t.agenda.trim()||'—','','NOTES',t.notes.trim()||'—','','ACTION ITEMS');
+  L.push(title(m).toUpperCase(),long(eff(m))+(t.start?'  ·  '+timeText(t):'')+'  ·  '+SL[t.status],'Where: '+(whereText(t)||'—')+(t.mode==='Online'&&t.link?'  ('+t.link+')':''),...(t.reason&&(t.status==='Postponed'||t.status==='Cancelled')?['Reason '+(t.status==='Cancelled'?'cancelled':'moved')+': '+t.reason]:[]),'','ATTENDANCE','Present: '+by('Present'),'Apologies: '+by('Apology'),'Absent: '+by('Absent'),'','AGENDA',t.agenda.trim()||'—','','NOTES',t.notes.trim()||'—','','ACTION ITEMS');
   if(!t.actions.length)L.push('—');t.actions.forEach((a,i)=>L.push(`${i+1}. ${a.text}  |  Owner: ${a.owner||'—'}  |  Due: ${a.due?short(a.due):'—'}  |  ${a.status}`));return L.join('\n');}
 function copyMinutes(m){const txt=minutes(m);const fb=()=>{download(txt,fileSafe('Minutes_'+m.dept+'_'+m.level+'_'+eff(m))+'.txt','text/plain');toast('Minutes saved as a text file',true);};
   try{navigator.clipboard.writeText(txt).then(()=>toast('Minutes copied. Paste them into an email',true),fb);}catch(e){fb();}}
@@ -980,9 +1000,9 @@ function dlIcs(items,name,cal){const st=new Date().toISOString().replace(/[-:]/g
 const cell=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
 const csv=(rows,name,msg)=>{download('\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n'),name,'text/csv');toast(msg,true);};
 const sorted=()=>M.slice().sort((a,b)=>a.date.localeCompare(b.date));
-function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Start Time','End Time','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
+function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Start Time','End Time','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Reason (cancelled / rescheduled)','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
   sorted().forEach(m=>{const t=track(m),by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join('; ');
-    rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,t.completedOn,cat(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
+    rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,(t.status==='Postponed'||t.status==='Cancelled')?t.reason||'':'',t.completedOn,cat(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
   csv(rows,'BAPS_Meeting_Register_'+TODAY_ISO+'.csv','Meeting register downloaded');}
 function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Status','Priority','% Complete','Overdue?','Done On','Added On','Latest Update','Latest Update By','Latest Update On']];
   sorted().forEach(m=>track(m).actions.forEach(a=>{const u=lastUpd(a);rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status==='Open'?'Not started':a.status,a.priority||'Medium',a.status==='Done'?100:(a.progress||0),overdue(a)?'Yes':'',a.doneOn||'',a.created||'',u?u.text:'',u?u.by:'',u?u.at.slice(0,10):'']);}));
