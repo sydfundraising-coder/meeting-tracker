@@ -384,6 +384,28 @@ body.sheet-open .toast{bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .backbtn:focus-visible{outline:2px solid var(--accent)}
 .mrow .why{font-size:12.5px;color:var(--muted);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .lbl small{font-weight:500;color:var(--muted);margin-left:6px}
+.opt .cnt{order:2;margin-left:auto;font-weight:600;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.opt .cnt~.rad,.opt .rad{order:3}.opt .cnt+span{order:1}
+.opt .cnt~.rad{margin-left:0}
+.swrow{display:flex;gap:8px;align-items:center;margin-top:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.swrow::-webkit-scrollbar{display:none}
+.swl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex:none}
+.chip{all:unset;cursor:pointer;flex:none;display:flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:18px;border:1px solid var(--line-2);background:var(--surface);font-size:14px;font-weight:600}
+.chip b{font-weight:700;font-size:13px;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.chip[aria-pressed="true"] b{color:var(--gold)}
+.chip:focus-visible{outline:2px solid var(--accent)}
+.swcard{border-color:color-mix(in srgb,var(--accent) 40%,var(--line));overflow:hidden}
+.swp{margin:0;padding:12px 14px;font-size:14.5px;background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.swbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px 14px;border-top:1px solid var(--line)}
+.swbtns .btn{min-width:0;padding:0 8px;white-space:nowrap}
+.swbtns .btn.primary{grid-column:1/-1}
+.btn.wa{color:#128c4a;border-color:color-mix(in srgb,#25d366 50%,var(--line-2))}
+.sec-h .gold{background:var(--accent);color:var(--on-accent);border-radius:10px;padding:0 7px;font-size:12.5px;font-weight:700;line-height:20px}
+.badge.gold{background:var(--accent)}
+:root{--gold-soft:#e6d3a8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--gold-soft:#6b5a36}}
+:root[data-theme="dark"]{--gold-soft:#6b5a36}
 
 #sidenav{display:contents}
 .top .sync{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
@@ -447,6 +469,8 @@ const I={
   repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
   note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4M8 9h8M8 13h5"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>',
   user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
 };
 /* ================= core data (unchanged storage format) ================= */
@@ -537,21 +561,38 @@ function refreshLists(){$('#people').replaceChildren(...people().map(n=>h('optio
 
 /* ================= filters ================= */
 function matchBase(m){const t=track(m);
-  if(ui.dept&&m.dept!==ui.dept)return false;if(ui.swami&&m.swami!==ui.swami)return false;
+  if(ui.dept&&m.dept!==ui.dept)return false;if(ui.swami&&!(ui.swami==='Need'?m.swami!=='No':m.swami===ui.swami))return false;
   if(ui.q){const hay=[m.dept,m.level,m.freq,t.notes,t.agenda,t.location,t.reason||'',...t.attendees.map(a=>a.name),...t.actions.map(a=>a.text+' '+a.owner)].join(' ').toLowerCase();if(!hay.includes(ui.q.toLowerCase()))return false;}
   return true;}
 const base=()=>M.filter(matchBase);
 const byDate=(a,b)=>eff(a).localeCompare(eff(b))||(track(a).start||'99').localeCompare(track(b).start||'99')||a.dept.localeCompare(b.dept);
 const filterOn=()=>!!(ui.dept||ui.swami);
+const SWL={Need:'Needs Swami',Yes:'Swami required',Occasionally:'Swami occasionally',No:'Swami not needed'};
+function noSwami(fn){const k=ui.swami;ui.swami='';try{return fn();}finally{ui.swami=k;}}
+/* Swami reminders: due 7 days before the meeting */
+const needsSwami=m=>m.swami==='Yes'||m.swami==='Occasionally';
+const reminded=m=>{const r=track(m).swamiRem;return !!(r&&r.for===eff(m));};
+function remindDue(){const hi=addDays(TODAY_ISO,7);return M.filter(m=>needsSwami(m)&&track(m).status!=='Cancelled'&&eff(m)>TODAY_ISO&&eff(m)<=hi&&(!ui.dept||m.dept===ui.dept)).sort(byDate);}
+function swamiMsg(list){const L=['Jai Swaminarayan Swami,','','A humble reminder of the coming week\'s meetings:',''];
+  list.forEach(m=>{const t=track(m);L.push('• '+dshort(eff(m))+(t.start?' at '+fmtT(t.start):'')+': '+m.level+' ('+m.dept+')'+(whereText(t)?' · '+whereText(t):'')+(m.swami==='Occasionally'?' (if convenient)':''));});
+  L.push('','Jai Swaminarayan'+(myName?'\n'+myName:''));return L.join('\n');}
+function markReminded(list,on){let n=0;const prev=list.map(m=>[m,track(m).swamiRem||null]);
+  for(const m of list){if(setTrack(m,{swamiRem:on?{for:eff(m),at:new Date().toISOString(),by:myName||''}:null})===false)return;n++;}
+  toast(on?(n===1?'Marked as reminded':`${n} meetings marked as reminded`):'Reminder unmarked',{force:true,undo:()=>{prev.forEach(([m,r])=>setTrack(m,{swamiRem:r}));renderView(true);repaintSheet();}});renderView(true);repaintSheet();}
+function shareSwami(list){const txt=swamiMsg(list);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');}
+function copySwami(list){const txt=swamiMsg(list);try{navigator.clipboard.writeText(txt).then(()=>toast('Message copied. Paste it into WhatsApp, SMS or email',true),()=>toast('Could not copy on this device',true));}catch(e){toast('Could not copy on this device',true);}}
+function swamiChips(v,pool){const cnt=k=>pool.filter(m=>k==='Need'?m.swami!=='No':m.swami===k).length;
+  v.append(h('div',{class:'swrow',role:'group','aria-label':"Swami's presence"},h('span',{class:'swl',text:'Swami'}),
+    [['Need','Needed'],['Yes','Required'],['Occasionally','Occasionally']].map(([k,l])=>h('button',{type:'button',class:'chip','aria-pressed':String(ui.swami===k),onclick:()=>{ui.swami=ui.swami===k?'':k;savePrefs();renderView(true);}},l,h('b',{text:cnt(k)})))));}
 function filterBtn(){const on=filterOn();return h('button',{type:'button',class:'pillbtn'+(on?' on':''),onclick:filterSheet,'aria-label':'Filter'},ic('filter'),on?(ui.dept||'')+(ui.dept&&ui.swami?' · ':'')+(ui.swami?'Swami':''):'Filter');}
 
 /* ================= shell ================= */
 const VIEWS=[['home','Home','home'],['meetings','Meetings','list'],['calendar','Calendar','cal'],['actions','Actions','task'],['more','More','menu']];
 const TITLES={home:['Home',''],meetings:['Meetings',''],calendar:['Calendar',''],actions:['Action items',''],more:['More','']};
 function renderNav(){
-  const need=M.filter(m=>cat(m)==='need').length,od=M.flatMap(m=>track(m).actions).filter(overdue).length;
+  const rd=remindDue().filter(m=>!reminded(m)).length,need=M.filter(m=>cat(m)==='need').length,od=M.flatMap(m=>track(m).actions).filter(overdue).length;
   const mk=()=>VIEWS.map(([k,l,i])=>h('button',{type:'button',class:'tab','aria-current':ui.view===k?'page':null,onclick:()=>go(k)},ic(i),h('span',{text:l}),
-    k==='meetings'&&need?h('span',{class:'badge',text:need}):k==='actions'&&od?h('span',{class:'badge',text:od}):null));
+    k==='home'&&rd?h('span',{class:'badge gold',text:rd}):k==='meetings'&&need?h('span',{class:'badge',text:need}):k==='actions'&&od?h('span',{class:'badge',text:od}):null));
   $('#tabs').replaceChildren(...mk());
   $('#sidenav').replaceChildren(...mk());
   $('#ttl').replaceChildren(TITLES[ui.view][0],h('span',{class:'sub',text:ui.view==='home'?fmt(TODAY,{weekday:'long',day:'numeric',month:'long'}):''}));
@@ -568,11 +609,11 @@ function stTag(m){const k=cat(m),t=track(m);
   if(k==='resch')return h('span',{class:'st resch',text:'Moved'});
   if(k==='need')return h('span',{class:'st need',text:t.status==='Postponed'&&!t.postponedTo?'Needs date':'Update'});
   if(eff(m)===TODAY_ISO)return h('span',{class:'st today',text:'Today'});return null;}
-function mRow(m,showDate){const t=track(m),k=cat(m);const wt=whereText(t);
+function mRow(m,showDate,occ){const t=track(m),k=cat(m);const wt=whereText(t);
   return h('button',{type:'button',class:'mrow'+(k==='cx'?' cx':''),'data-dept':m.dept,onclick:()=>meetingSheet(m.id),'aria-label':`${m.level}, ${m.dept}, ${dshort(eff(m))}`},
     h('div',{class:'tm'},showDate?fmt(parse(eff(m)),{day:'numeric',month:'short'}):(t.start?fmtT(t.start):'All day'),
       h('small',{text:showDate?(t.start?fmtT(t.start):fmt(parse(eff(m)),{weekday:'short'})):(t.end&&t.start?'to '+fmtT(t.end):'')})),
-    h('div',{class:'mm'},h('div',{class:'nm'},h('span',{text:m.level}),m.swami==='Yes'?h('span',{class:'tag',text:'Swami'}):null,m.tentative?h('span',{class:'tag grey',text:'Tentative'}):null),
+    h('div',{class:'mm'},h('div',{class:'nm'},h('span',{text:m.level}),m.swami==='Yes'?h('span',{class:'tag',text:'Swami'}):(occ||ui.swami==='Need'||ui.swami==='Occasionally')&&m.swami==='Occasionally'?h('span',{class:'tag grey',text:'Swami if possible'}):null,m.tentative?h('span',{class:'tag grey',text:'Tentative'}):null),
       h('div',{class:'sb',text:[m.dept,wt,t.status==='Postponed'&&t.postponedTo?'moved from '+short(m.date):''].filter(Boolean).join(' · ')}),
       (t.status==='Cancelled'||t.status==='Postponed')&&t.reason?h('div',{class:'why',text:(t.status==='Cancelled'?'Cancelled: ':'Moved: ')+t.reason}):null),
     stTag(m));}
@@ -612,6 +653,17 @@ VIEW_FN.home=v=>{
   const mo=TODAY_ISO.slice(0,7),mm=B.filter(m=>m.date.startsWith(mo));const c=k=>mm.filter(m=>cat(m)===k).length;
   v.append(h('div',{class:'kpis'},[['done','Completed'],['up','Upcoming'],['resch','Moved'],['cx','Cancelled']].map(([k,l])=>h('button',{type:'button',class:'kpi '+k,onclick:()=>{ui.month=mo;go('calendar');}},h('b',{text:c(k)}),h('span',{text:l})))));
   v.append(h('p',{class:'hint',text:`${fmt(TODAY,{month:'long'})} at a glance. Tap a number to open the calendar.`}));
+  {const due=remindDue(),todo=due.filter(m=>!reminded(m)),done=due.length-todo.length;
+   const swM=noSwami(()=>base()).filter(m=>m.date.startsWith(mo)&&needsSwami(m)&&track(m).status!=='Cancelled');
+   v.append(h('section',{class:'sec'},h('div',{class:'sec-h'},h('h2',{text:'Remind Swami'}),todo.length?h('span',{class:'gold',text:todo.length}):null,
+       h('button',{class:'more',type:'button',text:'Swami meetings',onclick:()=>{ui.swami='Need';ui.mtab='up';savePrefs();go('meetings');}})),
+     todo.length?h('div',{class:'card swcard'},h('p',{class:'swp',text:`${plural(todo.length,'meeting')} in the next 7 days ${todo.length===1?'needs':'need'} Swami's presence. Send Swami a reminder now.`}),
+       h('div',{class:'list'},todo.map(m=>mRow(m,true,true))),
+       h('div',{class:'swbtns'},h('button',{type:'button',class:'btn wa',html:I.send+'Send on WhatsApp',onclick:()=>shareSwami(todo)}),h('button',{type:'button',class:'btn',html:I.copy+'Copy message',onclick:()=>copySwami(todo)}),
+         h('button',{type:'button',class:'btn primary',html:I.check+'Mark as reminded',onclick:()=>markReminded(todo,true)})),
+       done?h('p',{class:'hint',style:'padding:0 14px 12px',text:`${plural(done,'other meeting')} this week already reminded.`}):null)
+     :h('div',{class:'card empty'},due.length?`Swami has been reminded about all ${plural(due.length,'meeting')} in the next 7 days.`:'No meetings needing Swami in the next 7 days.'),
+     h('p',{class:'hint',text:`${plural(swM.length,'meeting')} in ${fmt(TODAY,{month:'long'})} need Swami (${swM.filter(m=>m.swami==='Yes').length} required, ${swM.filter(m=>m.swami==='Occasionally').length} occasionally).`})));}
   if(need.length)v.append(h('section',{class:'sec'},h('div',{class:'sec-h'},h('h2',{text:'Did these happen?'}),h('span',{text:need.length}),need.length>3?h('button',{class:'more',type:'button',text:'See all',onclick:()=>{ui.mtab='need';go('meetings');}}):null),
     h('div',{class:'list alertcard'},need.slice(0,3).map(quickRow))));
   v.append(h('section',{class:'sec'},h('div',{class:'sec-h'},h('h2',{text:'Next 7 days'}),h('button',{class:'more',type:'button',text:'All meetings',onclick:()=>{ui.mtab='up';go('meetings');}})),
@@ -627,6 +679,7 @@ VIEW_FN.meetings=v=>{
   let qt;si.addEventListener('input',()=>{clearTimeout(qt);qt=setTimeout(()=>{ui.q=si.value.trim();const pos=si.selectionStart;renderView(true);const n=$('#q');if(n){n.focus();n.setSelectionRange(pos,pos);}},250);});
   v.append(h('label',{class:'search'},ic('search'),si),
     h('div',{class:'toolbar'},h('div',{class:'seg',role:'group','aria-label':'Show'},[['up','Upcoming',null],['need','To update',need.length],['past','Past',null]].map(([k,l,n])=>h('button',{type:'button','aria-pressed':String(ui.mtab===k),onclick:()=>{ui.mtab=k;renderView();}},l,n?h('span',{class:'n alert',text:n}):null))),filterBtn()));
+  swamiChips(v,noSwami(()=>base()).filter(m=>ui.mtab==='need'?cat(m)==='need':ui.mtab==='up'?eff(m)>=TODAY_ISO&&cat(m)!=='need':eff(m)<TODAY_ISO&&cat(m)!=='need'));
   if(ui.mtab==='need'){if(!need.length){v.append(h('div',{class:'card empty',style:'margin-top:16px'},h('b',{text:'All up to date'}),'Every past meeting has been marked.'));return;}
     v.append(h('p',{class:'hint',text:'Tap Completed, Moved or Cancelled for each one.'}),h('div',{class:'list',style:'margin-top:10px'},need.sort((a,b)=>eff(b).localeCompare(eff(a))).map(quickRow)));return;}
   if(ui.mtab==='up'){const all=B.filter(m=>eff(m)>=TODAY_ISO&&cat(m)!=='need').sort(byDate);const lim=addDays(TODAY_ISO,ui.upLimit);const list=all.filter(m=>eff(m)<lim);
@@ -697,6 +750,7 @@ VIEW_FN.more=v=>{
     h('div',{class:'sec-h',style:'margin-top:22px'},h('h2',{text:'Reports'})),h('div',{class:'mlist'},it('stat','Charts and summaries','Meetings by month, by department, attendance',reportsSheet)),
     h('div',{class:'sec-h',style:'margin-top:22px'},h('h2',{text:'Download'})),h('div',{class:'mlist'},
       it('ics','Calendar file (.ics)','Add every meeting to Outlook, Google or Apple Calendar',()=>dlIcs(M.filter(m=>track(m).status!=='Cancelled'),'BAPS_Meetings.ics','BAPS Meetings')),
+      it('bell','Swami reminder calendar (.ics)','A reminder on your phone 7 days before every meeting that needs Swami',dlSwamiIcs),
       it('sheet','Meeting register (.csv)','Every meeting with status, notes and attendance',dlRegister),
       it('sheet','Action items (.csv)','Owners, due dates and progress',dlActions),
       it('sheet','Attendance (.csv)','One row per person per meeting',dlAttend),
@@ -773,6 +827,8 @@ function renderMeeting(s){const m=BYID[s.id],t=s.draft,cur=track(m);const d=t.st
       h('div',{class:'irow'},h('span',{html:I.clock}),h('span',{class:cur.start?'':'mt',text:cur.start?timeText(cur):'No time set'}),null),
       h('div',{class:'irow'},h('span',{html:cur.mode==='Online'?I.video:I.pin}),h('span',{class:whereText(cur)?'':'mt',text:whereText(cur)||'No place set'}),
         cur.mode==='Online'&&/^https?:/i.test(cur.link||'')?h('a',{class:'btn sm',href:cur.link,target:'_blank',rel:'noopener',text:'Join'}):cur.mode!=='Online'&&cur.location?h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(cur.location),target:'_blank',rel:'noopener',text:'Map'}):null),
+      needsSwami(m)?(()=>{const r=cur.swamiRem,ok=r&&r.for===eff(m);return h('div',{class:'irow'},h('span',{html:I.bell}),h('span',{class:ok?'':'mt',text:ok?'Swami reminded '+fmt(new Date(r.at),{day:'numeric',month:'short'})+(r.by?' by '+(r.by===myName?'you':r.by):''):eff(m)<TODAY_ISO?'Swami reminder':'Swami not reminded yet'}),
+        eff(m)>=TODAY_ISO&&track(m).status!=='Cancelled'?h('button',{type:'button',class:'btn sm',text:ok?'Undo':'Mark reminded',onclick:()=>markReminded([m],!ok)}):null);})():null,
       h('div',{class:'irow'},h('span',{html:I.repeat}),h('span',{text:m.freq+(m.swami==='Yes'?' · Swami required':m.swami==='Occasionally'?' · Swami occasionally':'')}),null),
       m.note?h('div',{class:'irow'},h('span',{html:I.alert}),h('span',{class:'mt',text:m.note}),null):null,
       h('button',{type:'button',class:'editlink',html:I.edit+'Edit time, place or details',onclick:()=>{if(s.dirty){toast('Save or discard your changes first',true);return;}detailsSheet(m.id);}})),
@@ -943,7 +999,8 @@ function filterSheet(){const s=mkSheet({small:true});
   s.render=()=>[head({t:'Filter',small:1}),h('div',{class:'sh-body',style:'padding-top:4px'},
     h('div',{class:'lbl',style:'margin-top:0',text:'Department'}),h('div',{class:'opts',role:'radiogroup'},opt('All departments',!ui.dept,()=>{ui.dept='';savePrefs();renderView(true);paint(false);}),
       DEPTS.map(d=>opt(d,ui.dept===d,()=>{ui.dept=d;savePrefs();renderView(true);paint(false);},h('i',{class:'dot','data-dept':d})))),
-    h('div',{class:'lbl',text:"Swami's presence"}),h('div',{class:'opts',role:'radiogroup'},[['','Any'],['Yes','Required'],['Occasionally','Occasionally'],['No','Not required']].map(([v,l])=>opt(l,ui.swami===v,()=>{ui.swami=v;savePrefs();renderView(true);paint(false);})))),
+    h('div',{class:'lbl',text:"Swami's presence"}),(()=>{const pool=noSwami(()=>base());const n=k=>k===''?pool.length:pool.filter(m=>k==='Need'?m.swami!=='No':m.swami===k).length;
+      return h('div',{class:'opts',role:'radiogroup'},[['','Any'],['Need','Needs Swami (required or occasionally)'],['Yes','Required'],['Occasionally','Occasionally'],['No','Not required']].map(([v,l])=>opt(l,ui.swami===v,()=>{ui.swami=v;savePrefs();renderView(true);paint(false);},h('b',{class:'cnt',text:n(v)}))));})()),
     h('div',{class:'sh-foot'},filterOn()?h('button',{type:'button',class:'btn',text:'Clear',onclick:()=>{ui.dept='';ui.swami='';savePrefs();renderView(true);paint(false);}}):null,h('button',{type:'button',class:'btn primary',text:'Done',onclick:()=>closeSheet(true)}))];
   openSheet(s);}
 let nameCb=null;
@@ -961,12 +1018,18 @@ function reportsSheet(){const s=mkSheet({});
     const per={};B.forEach(m=>track(m).attendees.forEach(a=>{const p=per[a.name]??={n:a.name,P:0,T:0};p.T++;if(a.att==='Present')p.P++;}));const pl=Object.values(per).sort((a,b)=>b.P-a.P).slice(0,8);
     const acts=B.flatMap(m=>track(m).actions);const ad=acts.filter(a=>a.status==='Done').length;
     const legend=h('div',{class:'legend',style:'margin:0 0 6px'},order.map(k=>h('span',{},h('i',{style:`background:${CAT[k][1]}`}),CAT[k][0])));
-    return[head({t:'Reports',w:filterOn()?'Filtered: '+(ui.dept||'')+(ui.swami?' · Swami '+ui.swami:''):'All departments'}),h('div',{class:'sh-body'},
+    return[head({t:'Reports',w:filterOn()?'Filtered: '+[ui.dept,ui.swami?SWL[ui.swami]:''].filter(Boolean).join(' · '):'All departments'}),h('div',{class:'sh-body'},
       h('div',{class:'card rcard',style:'margin-top:0'},h('h3',{text:'Meetings by month'}),h('p',{text:`${plural(data.reduce((a,d)=>a+d.n,0),'meeting')} from Oct 2026 to Sep 2027`}),legend,
         h('div',{class:'bars'},data.map(d=>h('div',{class:'bcol',title:`${fmt(parse(d.k+'-01'),{month:'long'})}: ${d.n}`},h('span',{class:'v',text:d.n}),
           h('div',{class:'bstack',style:`height:${d.n/mx*130}px`},order.map(k=>d.c[k]?h('i',{style:`flex:${d.c[k]} 0 0;background:${CAT[k][1]}`}):null)),h('span',{class:'m',text:fmt(parse(d.k+'-01'),{month:'narrow'})}))))),
       h('div',{class:'card rcard'},h('h3',{text:'By department'}),h('p',{text:'Year total, coloured by status'}),depts.map(x=>h('div',{class:'hb','data-dept':x.d},h('span',{class:'nm'},h('i',{class:'dot'}),x.d),
         h('span',{class:'tr',style:`width:${x.n/dm*100}%`},order.map(k=>x.c[k]?h('i',{style:`flex:${x.c[k]} 0 0;background:${CAT[k][1]}`}):null)),h('span',{class:'c',text:x.n})))),
+      (()=>{const P=noSwami(()=>base());const sd=MONTHS.map(k=>{const ms=P.filter(m=>m.date.startsWith(k)&&track(m).status!=='Cancelled');return{k,y:ms.filter(m=>m.swami==='Yes').length,o:ms.filter(m=>m.swami==='Occasionally').length};});
+        const smx=Math.max(1,...sd.map(d=>d.y+d.o));const ty=sd.reduce((a,d)=>a+d.y,0),to=sd.reduce((a,d)=>a+d.o,0);
+        return h('div',{class:'card rcard'},h('h3',{text:"Swami's presence"}),h('p',{text:`${ty} required · ${to} occasionally · year total`}),
+          h('div',{class:'legend',style:'margin:0 0 6px'},h('span',{},h('i',{style:'background:var(--accent)'}),'Required'),h('span',{},h('i',{style:'background:var(--gold-soft,#e9d9b5)'}),'Occasionally')),
+          h('div',{class:'bars'},sd.map(d=>h('div',{class:'bcol',title:`${fmt(parse(d.k+'-01'),{month:'long'})}: ${d.y} required, ${d.o} occasionally`},h('span',{class:'v',text:d.y+d.o}),
+            h('div',{class:'bstack',style:`height:${(d.y+d.o)/smx*130}px`},d.o?h('i',{style:`flex:${d.o} 0 0;background:var(--gold-soft,#e9d9b5)`}):null,d.y?h('i',{style:`flex:${d.y} 0 0;background:var(--accent)`}):null),h('span',{class:'m',text:fmt(parse(d.k+'-01'),{month:'narrow'})})))));})(),
       h('div',{class:'card rcard'},h('h3',{text:'Actions'}),h('p',{text:acts.length?`${ad} of ${acts.length} done · ${acts.filter(overdue).length} overdue`:'No actions recorded yet'}),
         acts.length?h('div',{class:'hb'},h('span',{class:'nm',text:'Done'}),h('span',{class:'tr'},h('i',{style:`flex:${ad} 0 0;background:var(--done)`}),h('i',{style:`flex:${acts.length-ad} 0 0;background:var(--line-2)`})),h('span',{class:'c',text:Math.round(ad/acts.length*100)+'%'})):null),
       h('div',{class:'card rcard'},h('h3',{text:'Attendance'}),h('p',{text:pl.length?'Meetings attended, most first':'Record attendance inside a meeting to see it here'}),
@@ -995,14 +1058,23 @@ function dlIcs(items,name,cal){const st=new Date().toISOString().replace(/[-:]/g
   items.forEach(m=>{const d=parse(eff(m)),e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),t=track(m);
     L.push('BEGIN:VEVENT','UID:'+m.id+'@meetings.au.baps.org','DTSTAMP:'+st,'SEQUENCE:'+Math.floor(Date.now()/60000%100000),...(t.start?['DTSTART;TZID=Australia/Sydney:'+ymd(d)+'T'+t.start.replace(':','')+'00','DTEND;TZID=Australia/Sydney:'+ymd(d)+'T'+endOf(t).replace(':','')+'00']:['DTSTART;VALUE=DATE:'+ymd(d),'DTEND;VALUE=DATE:'+ymd(e)]),'SUMMARY:'+icsEsc(title(m)),...(calLoc(m)?['LOCATION:'+icsEsc(calLoc(m))]:[]),...(/^https?:/i.test(t.link||'')?['URL:'+t.link]:[]),
       'DESCRIPTION:'+icsEsc('Department: '+m.dept+'\n'+details(m)),'CATEGORIES:'+icsEsc(m.dept),'STATUS:'+(t.status==='Cancelled'?'CANCELLED':'CONFIRMED'),'TRANSP:'+(t.start?'OPAQUE':'TRANSPARENT'),
-      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title(m)+(t.start?' in 1 hour':' tomorrow')),'TRIGGER:'+(t.start?'-PT1H':'-PT15H'),'END:VALARM','END:VEVENT');});
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title(m)+(t.start?' in 1 hour':' tomorrow')),'TRIGGER:'+(t.start?'-PT1H':'-PT15H'),'END:VALARM',...(needsSwami(m)?['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc('Remind Swami: '+title(m)+' next week'),'TRIGGER:-P7D','END:VALARM']:[]),'END:VEVENT');});
   L.push('END:VCALENDAR');download(L.map(fold).join('\r\n')+'\r\n',name,'text/calendar');toast(items.length===1?'Calendar file downloaded':`Calendar file with ${items.length} meetings downloaded`,true);}
+function dlSwamiIcs(){const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const list=M.filter(m=>needsSwami(m)&&track(m).status!=='Cancelled'&&addDays(eff(m),-7)>=TODAY_ISO).sort(byDate);
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BAPS Australia//Meeting Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Remind Swami','X-WR-TIMEZONE:Australia/Sydney',
+    'BEGIN:VTIMEZONE','TZID:Australia/Sydney','BEGIN:STANDARD','DTSTART:19700405T030000','RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=1SU','TZOFFSETFROM:+1100','TZOFFSETTO:+1000','TZNAME:AEST','END:STANDARD','BEGIN:DAYLIGHT','DTSTART:19701004T020000','RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=1SU','TZOFFSETFROM:+1000','TZOFFSETTO:+1100','TZNAME:AEDT','END:DAYLIGHT','END:VTIMEZONE'];
+  list.forEach(m=>{const t=track(m),d=parse(addDays(eff(m),-7));const sum='Remind Swami: '+m.level+' ('+m.dept+') on '+dshort(eff(m));
+    L.push('BEGIN:VEVENT','UID:swami-'+m.id+'@meetings.au.baps.org','DTSTAMP:'+st,'SEQUENCE:'+Math.floor(Date.now()/60000%100000),'DTSTART;TZID=Australia/Sydney:'+ymd(d)+'T090000','DTEND;TZID=Australia/Sydney:'+ymd(d)+'T091500','SUMMARY:'+icsEsc(sum),
+      'DESCRIPTION:'+icsEsc('Meeting: '+title(m)+'\nDate: '+long(eff(m))+(t.start?'\nTime: '+timeText(t):'')+(whereText(t)?'\nWhere: '+whereText(t):'')+"\nSwami's presence: "+(m.swami==='Yes'?'Required':'Occasionally')+'\n\nOpen the Meeting Tracker, Home tab, to send the reminder.'),
+      'CATEGORIES:Swami reminder','TRANSP:TRANSPARENT','BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(sum),'TRIGGER:PT0M','END:VALARM','END:VEVENT');});
+  L.push('END:VCALENDAR');download(L.map(fold).join('\r\n')+'\r\n','BAPS_Remind_Swami.ics','text/calendar');toast(`${plural(list.length,'reminder')} downloaded. Open the file to add them to your calendar`,true);}
 const cell=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
 const csv=(rows,name,msg)=>{download('\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n'),name,'text/csv');toast(msg,true);};
 const sorted=()=>M.slice().sort((a,b)=>a.date.localeCompare(b.date));
-function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Start Time','End Time','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Reason (cancelled / rescheduled)','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
+function dlRegister(){const rows=[['Scheduled Date','Meeting Date (after changes)','Start Time','End Time','Department','Seva Level','Frequency',"Swami's Presence required?",'Meeting Type','Location','Meeting Link','Status','Rescheduled To','Reason (cancelled / rescheduled)','Swami Reminded On','Completed On','Needs update?','Agenda','Notes','Present','Apologies','Absent','Actions total','Actions open','Actions overdue']];
   sorted().forEach(m=>{const t=track(m),by=s=>t.attendees.filter(a=>a.att===s).map(a=>a.name).join('; ');
-    rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,(t.status==='Postponed'||t.status==='Cancelled')?t.reason||'':'',t.completedOn,cat(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
+    rows.push([m.date,eff(m),t.start,t.end,m.dept,m.level,m.freq,m.swami,t.mode,t.location,t.link,SL[t.status],t.postponedTo,(t.status==='Postponed'||t.status==='Cancelled')?t.reason||'':'',t.swamiRem&&t.swamiRem.for===eff(m)?t.swamiRem.at.slice(0,10):'',t.completedOn,cat(m)==='need'?'Yes':'',t.agenda,t.notes,by('Present'),by('Apology'),by('Absent'),t.actions.length||'',t.actions.filter(a=>a.status!=='Done').length||'',t.actions.filter(overdue).length||'']);});
   csv(rows,'BAPS_Meeting_Register_'+TODAY_ISO+'.csv','Meeting register downloaded');}
 function dlActions(){const rows=[['Meeting Date','Department','Seva Level','Action','Owner','Due Date','Status','Priority','% Complete','Overdue?','Done On','Added On','Latest Update','Latest Update By','Latest Update On']];
   sorted().forEach(m=>track(m).actions.forEach(a=>{const u=lastUpd(a);rows.push([eff(m),m.dept,m.level,a.text,a.owner,a.due,a.status==='Open'?'Not started':a.status,a.priority||'Medium',a.status==='Done'?100:(a.progress||0),overdue(a)?'Yes':'',a.doneOn||'',a.created||'',u?u.text:'',u?u.by:'',u?u.at.slice(0,10):'']);}));
